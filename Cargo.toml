@@ -1,6 +1,7 @@
 [package]
 name = "teslatte"
 version = "0.0.1"
+description = "A Rust crate for querying the Tesla API."
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
