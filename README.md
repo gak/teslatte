@@ -9,7 +9,7 @@ Currently, it only supports some the `/api/1/vehicles` endpoint, but it will be 
 
 It is fairly trivial to add in new endpoints if you feel like creating a PR. Please let me know if your PR is a massive change before spending a lot of time on it.
 
-Thanks to https://www.teslaapi.io/ for their excellent reference.
+Thanks to https://tesla-api.timdorr.com/ for their excellent reference.
 
 ## Example
 
