@@ -1,12 +1,15 @@
 # Teslatte 🚗🔋☕
 
-> :warning: **Alpha Warning!** This Rust crate is still in alpha stage. It is something I put together if anyone needs it, and I'm aiming to work on it as I need more features.
+> #### ⚠️ Alpha Warning! ⚠️
+> This Rust crate is still in alpha stage. It is something I quickly put together if anyone needed it. I'm aiming to work on it as I need more features.
 
 A Tesla API using the `owner-api.teslamotors.com` endpoint as well as "interactive" OAuth.
 
 Currently, it only supports some the `/api/1/vehicles` endpoint, but it will be expanded in the future.
 
 It is fairly trivial to add in new endpoints if you feel like creating a PR. Please let me know if your PR is a massive change before spending a lot of time on it.
+
+Thanks to https://www.teslaapi.io/ for their excellent reference.
 
 ## Example
 
