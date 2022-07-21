@@ -26,3 +26,5 @@ regex = "1.5"
 
 [dev-dependencies]
 test-log = { version = "0.2", default-features = false, features = ["trace"] }
+tracing-subscriber = "0.3"
+clap = { version = "3.2", features = ["derive", "env"]}

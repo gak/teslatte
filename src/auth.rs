@@ -5,6 +5,7 @@ use reqwest::Client;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::io::{stdin, stdout, Write};
+use std::str::FromStr;
 use url::Url;
 
 const AUTHORIZE_URL: &str = "https://auth.tesla.com/oauth2/v3/authorize";
@@ -17,8 +18,22 @@ pub struct Authentication {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessToken(pub String);
 
+impl FromStr for AccessToken {
+    type Err = TeslatteError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(AccessToken(s.to_string()))
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefreshToken(pub String);
+
+impl FromStr for RefreshToken {
+    type Err = TeslatteError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(RefreshToken(s.to_string()))
+    }
+}
 
 impl Authentication {
     pub fn new() -> Result<Self, TeslatteError> {

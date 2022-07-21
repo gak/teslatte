@@ -1,12 +1,15 @@
 use crate::auth::AccessToken;
 use crate::error::TeslatteError;
+use miette::IntoDiagnostic;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
+use std::str::FromStr;
 use tracing::{debug, instrument, trace};
 
 pub mod auth;
 pub mod error;
+pub mod vehicle_state;
 
 const API_URL: &str = "https://owner-api.teslamotors.com";
 
@@ -15,6 +18,19 @@ const API_URL: &str = "https://owner-api.teslamotors.com";
 /// This data comes from [`Api::vehicles()`] `id` field.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Id(u64);
+
+impl Display for Id {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for Id {
+    type Err = miette::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Id(s.parse().into_diagnostic()?))
+    }
+}
 
 /// Vehicle ID used by other endpoints.
 ///
@@ -44,10 +60,9 @@ impl Api {
         // I don't understand but it works: https://stackoverflow.com/a/60131725/11125
         D: for<'de> Deserialize<'de> + Debug,
     {
-        trace!("Fetching");
         let url = format!("{}{}", API_URL, path);
         let request = || format!("GET {url}");
-        debug!("Fetching");
+        trace!(?url, "Fetching");
         let response = self
             .client
             .get(&url)
@@ -69,7 +84,7 @@ impl Api {
             })?;
         trace!(?body);
 
-        let json = Self::json::<D, _>(&body, request)?;
+        let json = Self::parse_json::<D, _>(&body, request)?;
         trace!(?json);
 
         Ok(json)
@@ -106,7 +121,7 @@ impl Api {
                 source,
                 request: request(),
             })?;
-        let json = Self::json::<PostResponse, _>(&body, request)?;
+        let json = Self::parse_json::<PostResponse, _>(&body, request)?;
         trace!(?json);
 
         if json.result {
@@ -121,7 +136,7 @@ impl Api {
     }
 
     // The `request` argument is for additional context in the error.
-    fn json<T, F>(body: &str, request: F) -> Result<T, TeslatteError>
+    fn parse_json<T, F>(body: &str, request: F) -> Result<T, TeslatteError>
     where
         T: for<'de> Deserialize<'de> + Debug,
         F: FnOnce() -> String + Copy,
@@ -182,152 +197,86 @@ struct ResponseError {
     error_description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ChargeState {
-    pub battery_heater_on: bool,
-    pub battery_level: i64,
-    pub battery_range: f64,
-    pub charge_amps: i64,
-    pub charge_current_request: i64,
-    pub charge_current_request_max: i64,
-    pub charge_enable_request: bool,
-    pub charge_energy_added: f64,
-    pub charge_limit_soc: i64,
-    pub charge_limit_soc_max: i64,
-    pub charge_limit_soc_min: i64,
-    pub charge_limit_soc_std: i64,
-    pub charge_miles_added_ideal: f64,
-    pub charge_miles_added_rated: f64,
-    pub charge_port_cold_weather_mode: bool,
-    pub charge_port_color: String,
-    pub charge_port_door_open: bool,
-    pub charge_port_latch: String,
-    pub charge_rate: f64,
-    pub charge_to_max_range: bool,
-    pub charger_actual_current: i64,
-    pub charger_phases: Option<i64>,
-    pub charger_pilot_current: i64,
-    pub charger_power: i64,
-    pub charger_voltage: i64,
-    pub charging_state: String,
-    pub conn_charge_cable: String,
-    pub est_battery_range: f64,
-    pub fast_charger_brand: String,
-    pub fast_charger_present: bool,
-    pub fast_charger_type: String,
-    pub ideal_battery_range: f64,
-    pub managed_charging_active: bool,
-    pub managed_charging_start_time: Option<u64>,
-    pub managed_charging_user_canceled: bool,
-    pub max_range_charge_counter: i64,
-    pub minutes_to_full_charge: i64,
-    pub not_enough_power_to_heat: Option<bool>,
-    pub off_peak_charging_enabled: bool,
-    pub off_peak_charging_times: String,
-    pub off_peak_hours_end_time: i64,
-    pub preconditioning_enabled: bool,
-    pub preconditioning_times: String,
-    pub scheduled_charging_mode: String,
-    pub scheduled_charging_pending: bool,
-    pub scheduled_charging_start_time: Option<i64>,
-    pub scheduled_charging_start_time_app: Option<i64>,
-    pub scheduled_charging_start_time_minutes: Option<i64>,
-    pub scheduled_departure_time: i64,
-    pub scheduled_departure_time_minutes: i64,
-    pub supercharger_session_trip_planner: bool,
-    pub time_to_full_charge: f64,
-    pub timestamp: u64,
-    pub trip_charging: bool,
-    pub usable_battery_level: i64,
-    pub user_charge_enable_request: Option<bool>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Vehicles(Vec<Vehicle>);
-
-#[derive(Debug, Deserialize)]
-pub struct Vehicle {
-    pub id: Id,
-    pub vehicle_id: VehicleId,
-    pub vin: String,
-    pub display_name: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct VehicleData {
-    id: Id,
-    user_id: u64,
-    display_name: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct SetChargingAmps {
-    pub charging_amps: i64,
-}
-
-#[derive(Debug, Serialize)]
-pub struct SetChargeLimit {
-    // pub percent: Percentage,
-    pub percent: u8,
-}
-
 #[derive(Debug, Serialize)]
 struct Empty {}
 
-/// GET /api/1/vehicles/[id]/...
+/// GET /api/1/[url]
 macro_rules! get {
-    ($name:ident, $struct:ty, $url:expr) => {
-        pub async fn $name(&self) -> Result<$struct, TeslatteError> {
-            let url = format!("/api/1/vehicles{}", $url);
+    ($name:ident, $return_type:ty, $url:expr) => {
+        pub async fn $name(&self) -> Result<$return_type, TeslatteError> {
+            let url = format!("/api/1{}", $url);
             self.get(&url).await
         }
     };
 }
 
-/// GET /api/1/vehicles/[id]/...
-macro_rules! get_v {
-    ($name:ident, $struct:ty, $url:expr) => {
-        pub async fn $name(&self, id: &Id) -> Result<$struct, TeslatteError> {
-            let url = format!("/api/1/vehicles/{}{}", id.0, $url);
+/// GET /api/1/[url] with an argument.
+///
+/// Pass in the URL as a format string with one arg, which has to impl Display.
+macro_rules! get_arg {
+    ($name:ident, $return_type:ty, $url:expr, $arg_type:ty) => {
+        pub async fn $name(&self, arg: &$arg_type) -> miette::Result<$return_type, TeslatteError> {
+            let url = format!(concat!("/api/1", $url), arg);
             self.get(&url).await
         }
     };
 }
 
-/// POST /api/1/vehicles/[id]/... without data
-macro_rules! post_v {
-    ($name:ident, $url:expr) => {
-        pub async fn $name(&self, id: &Id) -> miette::Result<(), TeslatteError> {
-            let url = format!("/api/1/vehicles/{}{}", id.0, $url);
-            self.post(&url, &Empty {}).await
+/// POST /api/1/[url] with an argument and data
+macro_rules! post_arg {
+    ($name:ident, $request_type:ty, $url:expr, $arg_type:ty) => {
+        pub async fn $name(
+            &self,
+            arg: &$arg_type,
+            data: &$request_type,
+        ) -> miette::Result<(), TeslatteError> {
+            let url_fmt = format!($url, arg);
+            let url = format!(concat!("/api/1", $url), arg);
+            self.post(&url, data).await
         }
     };
 }
 
-/// POST /api/1/vehicles/[id]/... with data
-macro_rules! post_vd {
-    ($name:ident, $struct:ty, $url:expr) => {
-        pub async fn $name(&self, id: &Id, data: &$struct) -> miette::Result<(), TeslatteError> {
-            let url = format!("/api/1/vehicles/{}{}", id.0, $url);
-            self.post(&url, &data).await
-        }
-    };
-}
+// /// POST /api/1/vehicles/[id]/... without data
+// macro_rules! post_v {
+//     ($name:ident, $url:expr) => {
+//         pub async fn $name(&self, id: &Id) -> miette::Result<(), TeslatteError> {
+//             let url = format!("/vehicles/{}{}", id.0, $url);
+//             self.post(&url, &Empty {}).await
+//         }
+//     };
+// }
+//
+// /// POST /api/1/vehicles/[id]/... with data
+// macro_rules! post_vd {
+//     ($name:ident, $struct:ty, $url:expr) => {
+//         pub async fn $name(&self, id: &Id, data: &$struct) -> miette::Result<(), TeslatteError> {
+//             let url = format!("/api/1/vehicles/{}{}", id.0, $url);
+//             self.post(&url, &data).await
+//         }
+//     };
+// }
+
+use crate::vehicle_state::ChargeState;
+use crate::vehicle_state::SetChargeLimit;
+use crate::vehicle_state::Vehicle;
+use crate::vehicle_state::VehicleData;
 
 #[rustfmt::skip]
 impl Api {
-    get!(vehicles, Vec<Vehicle>, "");
-    get_v!(vehicle_data, VehicleData, "/vehicle_data");
-    get_v!(charge_state, ChargeState, "/data_request/charge_state");
-    post_vd!(set_charge_limit, SetChargeLimit, "/command/set_charge_limit");
-    post_vd!(set_charging_amps, SetChargingAmps, "/command/set_charging_amps");
-    post_v!(charge_start, "/command/charge_start");
-    post_v!(charge_stop, "/command/charge_stop");
+    get!(vehicles, Vec<Vehicle>, "/vehicles");
+    get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", Id);
+    get_arg!(charge_state, ChargeState, "/vehicles/{}/data_request/charge_state", Id);
+    post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", Id);
+    // post_vd!(set_charging_amps, SetChargingAmps, "/command/set_charging_amps");
+    // post_v!(charge_start, "/command/charge_start");
+    // post_v!(charge_stop, "/command/charge_stop");
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::vehicle_state::ChargeState;
     use test_log::test;
 
     #[test]
@@ -394,7 +343,7 @@ mod tests {
           }
         }
         "#;
-        Api::json::<ChargeState, _>(s, || "req".to_string()).unwrap();
+        Api::parse_json::<ChargeState, _>(s, || "req".to_string()).unwrap();
     }
 
     #[test]
@@ -403,7 +352,7 @@ mod tests {
             "response": null,
             "error":{"error": "timeout","error_description": "s"}
         }"#;
-        let e = Api::json::<ChargeState, _>(s, || "req".to_string());
+        let e = Api::parse_json::<ChargeState, _>(s, || "req".to_string());
         if let Err(e) = e {
             if let TeslatteError::ServerError {
                 msg, description, ..
