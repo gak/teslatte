@@ -8,7 +8,9 @@ use std::str::FromStr;
 use tracing::{debug, instrument, trace};
 
 pub mod auth;
+pub mod energy;
 pub mod error;
+pub mod powerwall;
 pub mod vehicles;
 
 const API_URL: &str = "https://owner-api.teslamotors.com";
@@ -17,18 +19,18 @@ const API_URL: &str = "https://owner-api.teslamotors.com";
 ///
 /// This data comes from [`Api::vehicles()`] `id` field.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Id(u64);
+pub struct VehicleId(u64);
 
-impl Display for Id {
+impl Display for VehicleId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl FromStr for Id {
+impl FromStr for VehicleId {
     type Err = miette::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Id(s.parse().into_diagnostic()?))
+        Ok(VehicleId(s.parse().into_diagnostic()?))
     }
 }
 
@@ -36,7 +38,7 @@ impl FromStr for Id {
 ///
 /// This data comes from [`Api::vehicles()`] `vehicle_id` field.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct VehicleId(u64);
+pub struct ExternalVehicleId(u64);
 
 pub struct Api {
     access_token: AccessToken,
@@ -257,7 +259,6 @@ pub(crate) use post_arg_empty;
 mod tests {
     use super::*;
     use crate::vehicles::ChargeState;
-    use test_log::test;
 
     #[test]
     fn error() {

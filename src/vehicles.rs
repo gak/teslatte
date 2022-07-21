@@ -1,27 +1,28 @@
-use crate::error::TeslatteError;
 /// Please note that these structs are generated from my own responses.
 ///
 /// Sometimes the API will return a null for a field where I've put in a non Option type, which
 /// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
-use crate::{get, get_arg, post_arg, post_arg_empty, Api, Empty, Id, VehicleId};
+use crate::error::TeslatteError;
+use crate::{get, get_arg, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId};
 use serde::{Deserialize, Serialize};
 
 #[rustfmt::skip]
 impl Api {
     get!(vehicles, Vec<Vehicle>, "/vehicles");
-    get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", Id);
-    get_arg!(charge_state, ChargeState, "/vehicles/{}/data_request/charge_state", Id);
-    post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", Id);
-    post_arg!(set_charging_amps, SetChargingAmps, "/vehicles/{}/command/set_charging_amps", Id);
-    post_arg_empty!(charge_start, "/vehicles/{}/command/charge_start", Id);
-    post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", Id);
+    get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
+    get_arg!(charge_state, ChargeState, "/vehicles/{}/data_request/charge_state", VehicleId);
+    post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", VehicleId);
+    post_arg!(set_charging_amps, SetChargingAmps, "/vehicles/{}/command/set_charging_amps", VehicleId);
+    post_arg_empty!(charge_start, "/vehicles/{}/command/charge_start", VehicleId);
+    post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", VehicleId);
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct VehicleData {
-    pub id: Id,
+    // Leave as first field for serde untagged.
+    pub vehicle_id: ExternalVehicleId,
+    pub id: VehicleId,
     pub user_id: i64,
-    pub vehicle_id: VehicleId,
     pub vin: String,
     pub display_name: String,
     pub option_codes: String,
@@ -38,12 +39,12 @@ pub struct VehicleData {
     pub backseat_token: Option<String>,
     /// gak: This was null for me, assuming String.
     pub backseat_token_updated_at: Option<String>,
-    pub charge_state: ChargeState,
-    pub climate_state: ClimateState,
-    pub drive_state: DriveState,
-    pub gui_settings: GuiSettings,
-    pub vehicle_config: VehicleConfig,
-    pub vehicle_state: VehicleState,
+    pub charge_state: Option<ChargeState>,
+    pub climate_state: Option<ClimateState>,
+    pub drive_state: Option<DriveState>,
+    pub gui_settings: Option<GuiSettings>,
+    pub vehicle_config: Option<VehicleConfig>,
+    pub vehicle_state: Option<VehicleState>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -300,8 +301,8 @@ pub struct Vehicles(Vec<Vehicle>);
 
 #[derive(Debug, Deserialize)]
 pub struct Vehicle {
-    pub id: Id,
-    pub vehicle_id: VehicleId,
+    pub id: VehicleId,
+    pub vehicle_id: ExternalVehicleId,
     pub vin: String,
     pub display_name: String,
 }
@@ -317,9 +318,13 @@ pub struct SetChargeLimit {
     pub percent: u8,
 }
 
-#[test]
-fn json() {
-    let s = r#"
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn json() {
+        let s = r#"
     {
       "response": {
         "battery_heater_on": false,
@@ -381,5 +386,6 @@ fn json() {
       }
     }
     "#;
-    Api::parse_json::<ChargeState, _>(s, || "req".to_string()).unwrap();
+        Api::parse_json::<ChargeState, _>(s, || "req".to_string()).unwrap();
+    }
 }

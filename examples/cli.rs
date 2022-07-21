@@ -1,11 +1,12 @@
+mod cli_vehicle;
+
 use clap::{Args, Parser, Subcommand};
+use cli_vehicle::VehicleArgs;
 use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, Authentication, RefreshToken};
+use teslatte::powerwall::PowerwallId;
 use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
-use teslatte::{Api, Id};
-
-const TESLA_ACCESS_TOKEN: &str = "TESLA_ACCESS_TOKEN";
-const TESLA_REFRESH_TOKEN: &str = "TESLA_REFRESH_TOKEN";
+use teslatte::{Api, VehicleId};
 
 /// Teslatte
 ///
@@ -52,81 +53,54 @@ struct ApiArgs {
 
 #[derive(Debug, Subcommand)]
 enum ApiCommand {
-    /// Get a list of vehicles.
+    /// List of vehicles.
     Vehicles,
 
     /// Specific Vehicle.
-    Vehicle(Vehicle),
+    Vehicle(VehicleArgs),
+
+    /// List of energy sites.
+    EnergySites,
+
+    /// Powerwall queries.
+    Powerwall(PowerwallArgs),
 }
 
 #[derive(Debug, Args)]
-struct Vehicle {
-    pub id: Id,
+struct PowerwallArgs {
+    pub id: PowerwallId,
 
     #[clap(subcommand)]
-    pub command: VehicleCommand,
+    pub command: PowerwallCommand,
 }
 
-impl Vehicle {
-    async fn run(self, api: &Api) {
+impl PowerwallArgs {
+    pub async fn run(&self, api: &Api) -> miette::Result<()> {
         match self.command {
-            VehicleCommand::Data => {
-                dbg!(api.vehicle_data(&self.id).await.unwrap());
-            }
-            VehicleCommand::ChargeState => {
-                dbg!(api.charge_state(&self.id).await.unwrap());
-            }
-            VehicleCommand::SetChargeLimit { percent } => {
-                dbg!(api
-                    .set_charge_limit(&self.id, &SetChargeLimit { percent })
-                    .await
-                    .unwrap());
-            }
-            VehicleCommand::SetChargingAmps { charging_amps } => {
-                dbg!(api
-                    .set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
-                    .await
-                    .unwrap());
-            }
-            VehicleCommand::ChargeStart => {
-                dbg!(api.charge_start(&self.id).await.unwrap());
-            }
-            VehicleCommand::ChargeStop => {
-                dbg!(api.charge_stop(&self.id).await.unwrap());
+            PowerwallCommand::Status => {
+                dbg!(api.powerwall_status(&self.id).await?);
             }
         }
+        Ok(())
     }
 }
 
 #[derive(Debug, Subcommand)]
-enum VehicleCommand {
-    /// Get vehicle data.
-    Data,
-
-    /// Get charge state.
-    ChargeState,
-
-    /// Set charge limit.
-    SetChargeLimit { percent: u8 },
-
-    /// Set charge amps.
-    SetChargingAmps { charging_amps: i64 },
-
-    /// Start charging.
-    ChargeStart,
-
-    /// Stop charging.
-    ChargeStop,
+enum PowerwallCommand {
+    /// Show the status of the Powerwall.
+    Status,
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> miette::Result<()> {
+    tracing_subscriber::fmt::init();
+
     let args = Cli::parse();
 
     match args.command {
         Command::Auth { save } => {
-            let auth = Authentication::new().unwrap();
-            let (access_token, refresh_token) = auth.interactive_get_access_token().await.unwrap();
+            let auth = Authentication::new()?;
+            let (access_token, refresh_token) = auth.interactive_get_access_token().await?;
             updated_tokens(save, access_token, refresh_token);
         }
         Command::Refresh { refresh_token } => {
@@ -138,8 +112,8 @@ async fn main() {
                 }
             };
 
-            let auth = Authentication::new().unwrap();
-            let response = auth.refresh_access_token(&refresh_token).await.unwrap();
+            let auth = Authentication::new()?;
+            let response = auth.refresh_access_token(&refresh_token).await?;
             updated_tokens(save, response.access_token, refresh_token);
         }
         Command::Api(api_args) => {
@@ -154,15 +128,21 @@ async fn main() {
             let api = Api::new(&access_token);
             match api_args.command {
                 ApiCommand::Vehicles => {
-                    let vehicles = api.vehicles().await.unwrap();
-                    dbg!(&vehicles);
+                    dbg!(api.vehicles().await?);
                 }
                 ApiCommand::Vehicle(v) => {
-                    v.run(&api).await;
+                    v.run(&api).await?;
+                }
+                ApiCommand::EnergySites => {
+                    dbg!(api.energy_sites().await?);
+                }
+                ApiCommand::Powerwall(p) => {
+                    p.run(&api).await?;
                 }
             }
         }
     }
+    Ok(())
 }
 
 fn updated_tokens(save: bool, access_token: AccessToken, refresh_token: RefreshToken) {
