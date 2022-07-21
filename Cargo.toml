@@ -10,20 +10,19 @@ name = "teslatte"
 path = "src/lib.rs"
 
 [dependencies]
-miette = { version = "5.1.1", features = ["fancy"] }
+miette = { version = "5.1", features = ["fancy"] }
 thiserror = "1.0.31"
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.20", features = ["full"] }
 tracing = "0.1"
-tracing-subscriber = "0.2"
-reqwest = { version = "0.11.9", features = ["rustls-tls", "cookies", "json"] }
-url = "*"
-serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.79"
-rustls = "0.20.4"
-sha256 = "1.0.3"
-base64 = "0.13.0"
-rand = "0.8.5"
-regex = "1.5.4"
+reqwest = { version = "0.11", features = ["rustls-tls", "cookies", "json"] }
+url = "2.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rustls = "0.20"
+sha256 = "1.0"
+base64 = "0.13"
+rand = "0.8"
+regex = "1.5"
 
 [dev-dependencies]
-test-log = { version = "*", default-features = false, features = ["trace"] }
+test-log = { version = "0.2", default-features = false, features = ["trace"] }
