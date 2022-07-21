@@ -67,6 +67,37 @@ struct Vehicle {
     pub command: VehicleCommand,
 }
 
+impl Vehicle {
+    async fn run(self, api: &Api) {
+        match self.command {
+            VehicleCommand::Data => {
+                dbg!(api.vehicle_data(&self.id).await.unwrap());
+            }
+            VehicleCommand::ChargeState => {
+                dbg!(api.charge_state(&self.id).await.unwrap());
+            }
+            VehicleCommand::SetChargeLimit { percent } => {
+                dbg!(api
+                    .set_charge_limit(&self.id, &SetChargeLimit { percent })
+                    .await
+                    .unwrap());
+            }
+            VehicleCommand::SetChargingAmps { charging_amps } => {
+                dbg!(api
+                    .set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
+                    .await
+                    .unwrap());
+            }
+            VehicleCommand::ChargeStart => {
+                dbg!(api.charge_start(&self.id).await.unwrap());
+            }
+            VehicleCommand::ChargeStop => {
+                dbg!(api.charge_stop(&self.id).await.unwrap());
+            }
+        }
+    }
+}
+
 #[derive(Debug, Subcommand)]
 enum VehicleCommand {
     /// Get vehicle data.
@@ -126,37 +157,10 @@ async fn main() {
                     let vehicles = api.vehicles().await.unwrap();
                     dbg!(&vehicles);
                 }
-                ApiCommand::Vehicle(v) => vehicles(&api, v).await,
+                ApiCommand::Vehicle(v) => {
+                    v.run(&api).await;
+                }
             }
-        }
-    }
-}
-
-async fn vehicles(api: &Api, vehicle: Vehicle) {
-    match vehicle.command {
-        VehicleCommand::Data => {
-            dbg!(api.vehicle_data(&vehicle.id).await.unwrap());
-        }
-        VehicleCommand::ChargeState => {
-            dbg!(api.charge_state(&vehicle.id).await.unwrap());
-        }
-        VehicleCommand::SetChargeLimit { percent } => {
-            dbg!(api
-                .set_charge_limit(&vehicle.id, &SetChargeLimit { percent })
-                .await
-                .unwrap());
-        }
-        VehicleCommand::SetChargingAmps { charging_amps } => {
-            dbg!(api
-                .set_charging_amps(&vehicle.id, &SetChargingAmps { charging_amps })
-                .await
-                .unwrap());
-        }
-        VehicleCommand::ChargeStart => {
-            dbg!(api.charge_start(&vehicle.id).await.unwrap());
-        }
-        VehicleCommand::ChargeStop => {
-            dbg!(api.charge_stop(&vehicle.id).await.unwrap());
         }
     }
 }
