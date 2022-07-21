@@ -1,9 +1,21 @@
+use crate::error::TeslatteError;
 /// Please note that these structs are generated from my own responses.
 ///
 /// Sometimes the API will return a null for a field where I've put in a non Option type, which
 /// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
-use crate::{Id, VehicleId};
+use crate::{get, get_arg, post_arg, post_arg_empty, Api, Empty, Id, VehicleId};
 use serde::{Deserialize, Serialize};
+
+#[rustfmt::skip]
+impl Api {
+    get!(vehicles, Vec<Vehicle>, "/vehicles");
+    get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", Id);
+    get_arg!(charge_state, ChargeState, "/vehicles/{}/data_request/charge_state", Id);
+    post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", Id);
+    post_arg!(set_charging_amps, SetChargingAmps, "/vehicles/{}/command/set_charging_amps", Id);
+    post_arg_empty!(charge_start, "/vehicles/{}/command/charge_start", Id);
+    post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", Id);
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct VehicleData {
@@ -303,4 +315,71 @@ pub struct SetChargingAmps {
 pub struct SetChargeLimit {
     // pub percent: Percentage,
     pub percent: u8,
+}
+
+#[test]
+fn json() {
+    let s = r#"
+    {
+      "response": {
+        "battery_heater_on": false,
+        "battery_level": 50,
+        "battery_range": 176.08,
+        "charge_amps": 5,
+        "charge_current_request": 5,
+        "charge_current_request_max": 16,
+        "charge_enable_request": true,
+        "charge_energy_added": 1.05,
+        "charge_limit_soc": 75,
+        "charge_limit_soc_max": 100,
+        "charge_limit_soc_min": 50,
+        "charge_limit_soc_std": 90,
+        "charge_miles_added_ideal": 5,
+        "charge_miles_added_rated": 5,
+        "charge_port_cold_weather_mode": false,
+        "charge_port_color": "<invalid>",
+        "charge_port_door_open": true,
+        "charge_port_latch": "Engaged",
+        "charge_rate": 14.8,
+        "charge_to_max_range": false,
+        "charger_actual_current": 5,
+        "charger_phases": 2,
+        "charger_pilot_current": 16,
+        "charger_power": 4,
+        "charger_voltage": 241,
+        "charging_state": "Charging",
+        "conn_charge_cable": "IEC",
+        "est_battery_range": 163.81,
+        "fast_charger_brand": "<invalid>",
+        "fast_charger_present": false,
+        "fast_charger_type": "ACSingleWireCAN",
+        "ideal_battery_range": 176.08,
+        "managed_charging_active": false,
+        "managed_charging_start_time": null,
+        "managed_charging_user_canceled": false,
+        "max_range_charge_counter": 0,
+        "minutes_to_full_charge": 350,
+        "not_enough_power_to_heat": null,
+        "off_peak_charging_enabled": false,
+        "off_peak_charging_times": "all_week",
+        "off_peak_hours_end_time": 1140,
+        "preconditioning_enabled": false,
+        "preconditioning_times": "all_week",
+        "scheduled_charging_mode": "StartAt",
+        "scheduled_charging_pending": false,
+        "scheduled_charging_start_time": 1647045000,
+        "scheduled_charging_start_time_app": 690,
+        "scheduled_charging_start_time_minutes": 690,
+        "scheduled_departure_time": 1641337200,
+        "scheduled_departure_time_minutes": 600,
+        "supercharger_session_trip_planner": false,
+        "time_to_full_charge": 5.83,
+        "timestamp": 1646978638155,
+        "trip_charging": false,
+        "usable_battery_level": 50,
+        "user_charge_enable_request": null
+      }
+    }
+    "#;
+    Api::parse_json::<ChargeState, _>(s, || "req".to_string()).unwrap();
 }

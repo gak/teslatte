@@ -1,7 +1,7 @@
 use clap::{Args, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, Authentication, RefreshToken};
-use teslatte::vehicle_state::SetChargeLimit;
+use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
 use teslatte::{Api, Id};
 
 const TESLA_ACCESS_TOKEN: &str = "TESLA_ACCESS_TOKEN";
@@ -55,14 +55,37 @@ enum ApiCommand {
     /// Get a list of vehicles.
     Vehicles,
 
+    /// Specific Vehicle.
+    Vehicle(Vehicle),
+}
+
+#[derive(Debug, Args)]
+struct Vehicle {
+    pub id: Id,
+
+    #[clap(subcommand)]
+    pub command: VehicleCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum VehicleCommand {
     /// Get vehicle data.
-    VehicleData { id: Id },
+    Data,
 
     /// Get charge state.
-    ChargeState { id: Id },
+    ChargeState,
 
     /// Set charge limit.
-    SetChargeLimit { id: Id, percent: u8 },
+    SetChargeLimit { percent: u8 },
+
+    /// Set charge amps.
+    SetChargingAmps { charging_amps: i64 },
+
+    /// Start charging.
+    ChargeStart,
+
+    /// Stop charging.
+    ChargeStop,
 }
 
 #[tokio::main]
@@ -89,33 +112,51 @@ async fn main() {
             updated_tokens(save, response.access_token, refresh_token);
         }
         Command::Api(api_args) => {
-            let access_token = match api_args.access_token {
-                Some(a) => a,
+            let access_token = match &api_args.access_token {
+                Some(a) => a.clone(),
                 None => {
                     let config = Config::load();
-                    config.access_token
+                    config.access_token.clone()
                 }
             };
 
             let api = Api::new(&access_token);
-            #[allow(unused_results)]
             match api_args.command {
                 ApiCommand::Vehicles => {
-                    dbg!(api.vehicles().await.unwrap());
+                    let vehicles = api.vehicles().await.unwrap();
+                    dbg!(&vehicles);
                 }
-                ApiCommand::VehicleData { id } => {
-                    dbg!(api.vehicle_data(&id).await.unwrap());
-                }
-                ApiCommand::ChargeState { id } => {
-                    dbg!(api.charge_state(&id).await.unwrap());
-                }
-                ApiCommand::SetChargeLimit { id, percent } => {
-                    dbg!(api
-                        .set_charge_limit(&id, &SetChargeLimit { percent })
-                        .await
-                        .unwrap());
-                }
+                ApiCommand::Vehicle(v) => vehicles(&api, v).await,
             }
+        }
+    }
+}
+
+async fn vehicles(api: &Api, vehicle: Vehicle) {
+    match vehicle.command {
+        VehicleCommand::Data => {
+            dbg!(api.vehicle_data(&vehicle.id).await.unwrap());
+        }
+        VehicleCommand::ChargeState => {
+            dbg!(api.charge_state(&vehicle.id).await.unwrap());
+        }
+        VehicleCommand::SetChargeLimit { percent } => {
+            dbg!(api
+                .set_charge_limit(&vehicle.id, &SetChargeLimit { percent })
+                .await
+                .unwrap());
+        }
+        VehicleCommand::SetChargingAmps { charging_amps } => {
+            dbg!(api
+                .set_charging_amps(&vehicle.id, &SetChargingAmps { charging_amps })
+                .await
+                .unwrap());
+        }
+        VehicleCommand::ChargeStart => {
+            dbg!(api.charge_start(&vehicle.id).await.unwrap());
+        }
+        VehicleCommand::ChargeStop => {
+            dbg!(api.charge_stop(&vehicle.id).await.unwrap());
         }
     }
 }

@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::env;
 use teslatte::auth::{AccessToken, Authentication};
-use teslatte::vehicle_state::SetChargeLimit;
+use teslatte::vehicles::SetChargeLimit;
 use teslatte::Api;
 
 #[tokio::main]

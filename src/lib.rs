@@ -9,7 +9,7 @@ use tracing::{debug, instrument, trace};
 
 pub mod auth;
 pub mod error;
-pub mod vehicle_state;
+pub mod vehicles;
 
 const API_URL: &str = "https://owner-api.teslamotors.com";
 
@@ -209,6 +209,7 @@ macro_rules! get {
         }
     };
 }
+pub(crate) use get;
 
 /// GET /api/1/[url] with an argument.
 ///
@@ -216,11 +217,13 @@ macro_rules! get {
 macro_rules! get_arg {
     ($name:ident, $return_type:ty, $url:expr, $arg_type:ty) => {
         pub async fn $name(&self, arg: &$arg_type) -> miette::Result<$return_type, TeslatteError> {
-            let url = format!(concat!("/api/1", $url), arg);
+            let url = format!($url, arg);
+            let url = format!("/api/1{}", url);
             self.get(&url).await
         }
     };
 }
+pub(crate) use get_arg;
 
 /// POST /api/1/[url] with an argument and data
 macro_rules! post_arg {
@@ -230,121 +233,31 @@ macro_rules! post_arg {
             arg: &$arg_type,
             data: &$request_type,
         ) -> miette::Result<(), TeslatteError> {
-            let url_fmt = format!($url, arg);
-            let url = format!(concat!("/api/1", $url), arg);
+            let url = format!($url, arg);
+            let url = format!("/api/1{}", url);
             self.post(&url, data).await
         }
     };
 }
+pub(crate) use post_arg;
 
-// /// POST /api/1/vehicles/[id]/... without data
-// macro_rules! post_v {
-//     ($name:ident, $url:expr) => {
-//         pub async fn $name(&self, id: &Id) -> miette::Result<(), TeslatteError> {
-//             let url = format!("/vehicles/{}{}", id.0, $url);
-//             self.post(&url, &Empty {}).await
-//         }
-//     };
-// }
-//
-// /// POST /api/1/vehicles/[id]/... with data
-// macro_rules! post_vd {
-//     ($name:ident, $struct:ty, $url:expr) => {
-//         pub async fn $name(&self, id: &Id, data: &$struct) -> miette::Result<(), TeslatteError> {
-//             let url = format!("/api/1/vehicles/{}{}", id.0, $url);
-//             self.post(&url, &data).await
-//         }
-//     };
-// }
-
-use crate::vehicle_state::ChargeState;
-use crate::vehicle_state::SetChargeLimit;
-use crate::vehicle_state::Vehicle;
-use crate::vehicle_state::VehicleData;
-
-#[rustfmt::skip]
-impl Api {
-    get!(vehicles, Vec<Vehicle>, "/vehicles");
-    get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", Id);
-    get_arg!(charge_state, ChargeState, "/vehicles/{}/data_request/charge_state", Id);
-    post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", Id);
-    // post_vd!(set_charging_amps, SetChargingAmps, "/command/set_charging_amps");
-    // post_v!(charge_start, "/command/charge_start");
-    // post_v!(charge_stop, "/command/charge_stop");
+/// Post like above but with an empty body using the Empty struct.
+macro_rules! post_arg_empty {
+    ($name:ident, $url:expr, $arg_type:ty) => {
+        pub async fn $name(&self, arg: &$arg_type) -> miette::Result<(), TeslatteError> {
+            let url = format!($url, arg);
+            let url = format!("/api/1{}", url);
+            self.post(&url, &Empty {}).await
+        }
+    };
 }
+pub(crate) use post_arg_empty;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::vehicle_state::ChargeState;
+    use crate::vehicles::ChargeState;
     use test_log::test;
-
-    #[test]
-    fn json() {
-        let s = r#"
-        {
-          "response": {
-            "battery_heater_on": false,
-            "battery_level": 50,
-            "battery_range": 176.08,
-            "charge_amps": 5,
-            "charge_current_request": 5,
-            "charge_current_request_max": 16,
-            "charge_enable_request": true,
-            "charge_energy_added": 1.05,
-            "charge_limit_soc": 75,
-            "charge_limit_soc_max": 100,
-            "charge_limit_soc_min": 50,
-            "charge_limit_soc_std": 90,
-            "charge_miles_added_ideal": 5,
-            "charge_miles_added_rated": 5,
-            "charge_port_cold_weather_mode": false,
-            "charge_port_color": "<invalid>",
-            "charge_port_door_open": true,
-            "charge_port_latch": "Engaged",
-            "charge_rate": 14.8,
-            "charge_to_max_range": false,
-            "charger_actual_current": 5,
-            "charger_phases": 2,
-            "charger_pilot_current": 16,
-            "charger_power": 4,
-            "charger_voltage": 241,
-            "charging_state": "Charging",
-            "conn_charge_cable": "IEC",
-            "est_battery_range": 163.81,
-            "fast_charger_brand": "<invalid>",
-            "fast_charger_present": false,
-            "fast_charger_type": "ACSingleWireCAN",
-            "ideal_battery_range": 176.08,
-            "managed_charging_active": false,
-            "managed_charging_start_time": null,
-            "managed_charging_user_canceled": false,
-            "max_range_charge_counter": 0,
-            "minutes_to_full_charge": 350,
-            "not_enough_power_to_heat": null,
-            "off_peak_charging_enabled": false,
-            "off_peak_charging_times": "all_week",
-            "off_peak_hours_end_time": 1140,
-            "preconditioning_enabled": false,
-            "preconditioning_times": "all_week",
-            "scheduled_charging_mode": "StartAt",
-            "scheduled_charging_pending": false,
-            "scheduled_charging_start_time": 1647045000,
-            "scheduled_charging_start_time_app": 690,
-            "scheduled_charging_start_time_minutes": 690,
-            "scheduled_departure_time": 1641337200,
-            "scheduled_departure_time_minutes": 600,
-            "supercharger_session_trip_planner": false,
-            "time_to_full_charge": 5.83,
-            "timestamp": 1646978638155,
-            "trip_charging": false,
-            "usable_battery_level": 50,
-            "user_charge_enable_request": null
-          }
-        }
-        "#;
-        Api::parse_json::<ChargeState, _>(s, || "req".to_string()).unwrap();
-    }
 
     #[test]
     fn error() {
