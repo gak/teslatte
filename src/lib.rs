@@ -227,6 +227,18 @@ macro_rules! get_arg {
 }
 pub(crate) use get_arg;
 
+/// GET /api/1/[url] with a struct.
+macro_rules! get_args {
+    ($name:ident, $return_type:ty, $url:expr, $args:ty) => {
+        pub async fn $name(&self, values: &$args) -> miette::Result<$return_type, TeslatteError> {
+            let url = values.format($url);
+            let url = format!("/api/1{}", url);
+            self.get(&url).await
+        }
+    };
+}
+pub(crate) use get_args;
+
 /// POST /api/1/[url] with an argument and data
 macro_rules! post_arg {
     ($name:ident, $request_type:ty, $url:expr, $arg_type:ty) => {

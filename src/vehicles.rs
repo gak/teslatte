@@ -1,4 +1,4 @@
-/// Please note that these structs are generated from my own responses.
+/// Please note that many of these structs are generated from my own API call responses.
 ///
 /// Sometimes the API will return a null for a field where I've put in a non Option type, which
 /// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
@@ -39,6 +39,8 @@ pub struct VehicleData {
     pub backseat_token: Option<String>,
     /// gak: This was null for me, assuming String.
     pub backseat_token_updated_at: Option<String>,
+
+    /// Some of these have been null for me, so making them all Option.
     pub charge_state: Option<ChargeState>,
     pub climate_state: Option<ClimateState>,
     pub drive_state: Option<DriveState>,

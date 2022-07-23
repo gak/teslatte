@@ -1,12 +1,34 @@
 use crate::error::TeslatteError;
 use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
-use crate::{get, get_arg, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId};
+use crate::{
+    get, get_arg, get_args, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId,
+};
 use serde::{Deserialize, Serialize};
 
 #[rustfmt::skip]
 impl Api {
     get!(energy_sites, Vec<EnergySite>, "/products");
+    // https://owner-api.teslamotors.com/api/1/energy_sites/1370797147/calendar_history?period=day&kind=power
+    get_args!(energy_sites_calendar_history, CalendarHistory, "/energy_sites/{}/calendar_history", CalendarHistoryValues);
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CalendarHistory {}
+
+trait Values {
+    fn format(&self, url: &str) -> String;
+}
+
+pub struct CalendarHistoryValues {
+    period: String,
+    kind: String,
+}
+
+impl Values for CalendarHistoryValues {
+    fn format(&self, url: &str) -> String {
+        format!("{}?period={}&kind={}", url, self.period, self.kind)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
