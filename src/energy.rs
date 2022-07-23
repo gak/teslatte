@@ -5,6 +5,7 @@ use crate::{
     get, get_arg, get_args, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId,
 };
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[rustfmt::skip]
 impl Api {
@@ -20,14 +21,45 @@ trait Values {
     fn format(&self, url: &str) -> String;
 }
 
+#[derive(Debug, Clone, strum::Display)]
+#[strum(serialize_all = "snake_case")]
+pub enum HistoryKind {
+    Power,
+    Energy,
+}
+
+#[derive(Debug, Clone, strum::Display)]
+#[strum(serialize_all = "snake_case")]
+pub enum HistoryPeriod {
+    Day,
+    Week,
+    Month,
+    Year,
+}
+
 pub struct CalendarHistoryValues {
-    period: String,
-    kind: String,
+    site_id: EnergySiteId,
+    period: HistoryPeriod,
+    kind: HistoryKind,
+    start_date: Option<chrono::DateTime<chrono::Utc>>,
+    end_date: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl Values for CalendarHistoryValues {
     fn format(&self, url: &str) -> String {
-        format!("{}?period={}&kind={}", url, self.period, self.kind)
+        let url = url.replace("{}", &format!("{}", self.site_id.0));
+        let mut url = Url::parse(&url).unwrap();
+        let mut pairs = url.query_pairs_mut();
+        pairs.append_pair("period", &self.period.to_string());
+        pairs.append_pair("kind", &self.kind.to_string());
+        if let Some(start_date) = self.start_date {
+            pairs.append_pair("start_date", &start_date.to_rfc3339());
+        }
+        if let Some(end_date) = self.end_date {
+            pairs.append_pair("end_date", &end_date.to_rfc3339());
+        }
+        drop(pairs);
+        url.to_string()
     }
 }
 
@@ -239,5 +271,21 @@ mod tests {
         } else {
             panic!("Wrong EnergySite");
         }
+    }
+
+    #[test]
+    fn calendar_history_values() {
+        let v = CalendarHistoryValues {
+            site_id: EnergySiteId(123),
+            period: HistoryPeriod::Month,
+            kind: HistoryKind::Energy,
+            start_date: None,
+            end_date: None,
+        };
+        let url = v.format("https://base.com/e/{}/history");
+        assert_eq!(
+            url,
+            "https://base.com/e/123/history?period=month&kind=energy"
+        );
     }
 }
