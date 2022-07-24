@@ -1,5 +1,6 @@
 use crate::auth::AccessToken;
 use crate::error::TeslatteError;
+use chrono::{DateTime, SecondsFormat, TimeZone};
 use miette::IntoDiagnostic;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -8,12 +9,17 @@ use std::str::FromStr;
 use tracing::{debug, instrument, trace};
 
 pub mod auth;
+pub mod calendar_history;
 pub mod energy;
 pub mod error;
 pub mod powerwall;
 pub mod vehicles;
 
 const API_URL: &str = "https://owner-api.teslamotors.com";
+
+trait Values {
+    fn format(&self, url: &str) -> String;
+}
 
 /// Vehicle ID used by the owner-api endpoint.
 ///
@@ -266,6 +272,14 @@ macro_rules! post_arg_empty {
     };
 }
 pub(crate) use post_arg_empty;
+
+pub(crate) fn rfc3339<Tz>(d: &DateTime<Tz>) -> String
+where
+    Tz: TimeZone,
+    Tz::Offset: Display,
+{
+    d.to_rfc3339_opts(SecondsFormat::Secs, true)
+}
 
 #[cfg(test)]
 mod tests {

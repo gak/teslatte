@@ -4,67 +4,29 @@ use crate::vehicles::VehicleData;
 use crate::{
     get, get_arg, get_args, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId,
 };
+use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
-use url::Url;
+use std::str::FromStr;
+use strum::{Display, EnumString};
+use url::{Url, UrlQuery};
 
 #[rustfmt::skip]
 impl Api {
     get!(energy_sites, Vec<EnergySite>, "/products");
-    // https://owner-api.teslamotors.com/api/1/energy_sites/1370797147/calendar_history?period=day&kind=power
-    get_args!(energy_sites_calendar_history, CalendarHistory, "/energy_sites/{}/calendar_history", CalendarHistoryValues);
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct CalendarHistory {}
+pub struct EnergySiteId(pub u64);
 
-trait Values {
-    fn format(&self, url: &str) -> String;
-}
+impl FromStr for EnergySiteId {
+    type Err = TeslatteError;
 
-#[derive(Debug, Clone, strum::Display)]
-#[strum(serialize_all = "snake_case")]
-pub enum HistoryKind {
-    Power,
-    Energy,
-}
-
-#[derive(Debug, Clone, strum::Display)]
-#[strum(serialize_all = "snake_case")]
-pub enum HistoryPeriod {
-    Day,
-    Week,
-    Month,
-    Year,
-}
-
-pub struct CalendarHistoryValues {
-    site_id: EnergySiteId,
-    period: HistoryPeriod,
-    kind: HistoryKind,
-    start_date: Option<chrono::DateTime<chrono::Utc>>,
-    end_date: Option<chrono::DateTime<chrono::Utc>>,
-}
-
-impl Values for CalendarHistoryValues {
-    fn format(&self, url: &str) -> String {
-        let url = url.replace("{}", &format!("{}", self.site_id.0));
-        let mut url = Url::parse(&url).unwrap();
-        let mut pairs = url.query_pairs_mut();
-        pairs.append_pair("period", &self.period.to_string());
-        pairs.append_pair("kind", &self.kind.to_string());
-        if let Some(start_date) = self.start_date {
-            pairs.append_pair("start_date", &start_date.to_rfc3339());
-        }
-        if let Some(end_date) = self.end_date {
-            pairs.append_pair("end_date", &end_date.to_rfc3339());
-        }
-        drop(pairs);
-        url.to_string()
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(EnergySiteId(s.parse().map_err(|_| {
+            TeslatteError::DecodeEnergySiteIdError(s.to_string())
+        })?))
     }
 }
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct EnergySiteId(u64);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GatewayId(String);
@@ -128,6 +90,8 @@ pub struct Components {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
+    use crate::Values;
 
     #[test]
     fn energy_match_powerwall() {
@@ -286,6 +250,22 @@ mod tests {
         assert_eq!(
             url,
             "https://base.com/e/123/history?period=month&kind=energy"
+        );
+    }
+
+    #[test]
+    fn calendar_history_values_dates() {
+        let v = CalendarHistoryValues {
+            site_id: EnergySiteId(123),
+            period: HistoryPeriod::Month,
+            kind: HistoryKind::Energy,
+            start_date: Some(DateTime::parse_from_rfc3339("2020-01-01T00:00:00Z").unwrap()),
+            end_date: Some(DateTime::parse_from_rfc3339("2020-01-31T23:59:59Z").unwrap()),
+        };
+        let url = v.format("https://base.com/e/{}/history");
+        assert_eq!(
+            url,
+            "https://base.com/e/123/history?period=month&kind=energy&start_date=2020-01-01T00:00:00Z&end_date=2020-01-31T23:59:59Z"
         );
     }
 }

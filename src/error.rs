@@ -35,4 +35,7 @@ pub enum TeslatteError {
 
     #[error("Callback URL did not contain a callback code.")]
     CouldNotFindCallbackCode,
+
+    #[error("Could not convert \"{0}\" to an EnergySiteId.")]
+    DecodeEnergySiteIdError(String),
 }

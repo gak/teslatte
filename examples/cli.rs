@@ -1,9 +1,13 @@
 mod cli_vehicle;
 
+use chrono::DateTime;
 use clap::{Args, Parser, Subcommand};
 use cli_vehicle::VehicleArgs;
+use miette::{miette, IntoDiagnostic, WrapErr};
 use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, Authentication, RefreshToken};
+use teslatte::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
+use teslatte::energy::EnergySiteId;
 use teslatte::powerwall::PowerwallId;
 use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
 use teslatte::{Api, VehicleId};
@@ -62,8 +66,69 @@ enum ApiCommand {
     /// List of energy sites.
     EnergySites,
 
+    /// Specific energy site.
+    EnergySite(EnergySiteArgs),
+
     /// Powerwall queries.
     Powerwall(PowerwallArgs),
+}
+
+#[derive(Debug, Args)]
+struct EnergySiteArgs {
+    pub id: EnergySiteId,
+
+    #[clap(subcommand)]
+    pub command: EnergySiteCommand,
+}
+
+impl EnergySiteArgs {
+    pub async fn run(&self, api: &Api) -> miette::Result<()> {
+        match &self.command {
+            EnergySiteCommand::CalendarHistory(args) => {
+                let start_date = args
+                    .start
+                    .as_ref()
+                    .map(|s| DateTime::parse_from_rfc3339(&s).into_diagnostic())
+                    .transpose()
+                    .wrap_err("start_date")?;
+                let end_date = args
+                    .end
+                    .as_ref()
+                    .map(|s| DateTime::parse_from_rfc3339(&s).into_diagnostic())
+                    .transpose()
+                    .wrap_err("end_date")?;
+                let values = CalendarHistoryValues {
+                    site_id: self.id.clone(),
+                    kind: args.kind.clone(),
+                    period: args.period.clone(),
+                    start_date,
+                    end_date,
+                };
+                let history = api.energy_sites_calendar_history(&values).await?;
+                println!("{:#?}", history);
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Subcommand)]
+enum EnergySiteCommand {
+    CalendarHistory(CalendarHistoryArgs),
+}
+
+#[derive(Debug, Args)]
+struct CalendarHistoryArgs {
+    pub kind: HistoryKind,
+
+    #[clap(short, long, default_value = "day")]
+    pub period: HistoryPeriod,
+
+    #[clap(short, long)]
+    start: Option<String>,
+
+    #[clap(short, long)]
+    end: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -135,6 +200,9 @@ async fn main() -> miette::Result<()> {
                 }
                 ApiCommand::EnergySites => {
                     dbg!(api.energy_sites().await?);
+                }
+                ApiCommand::EnergySite(e) => {
+                    e.run(&api).await?;
                 }
                 ApiCommand::Powerwall(p) => {
                     p.run(&api).await?;
