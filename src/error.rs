@@ -38,4 +38,7 @@ pub enum TeslatteError {
 
     #[error("Could not convert \"{0}\" to an EnergySiteId.")]
     DecodeEnergySiteIdError(String),
+
+    #[error("No refresh token available.")]
+    NoRefreshToken,
 }

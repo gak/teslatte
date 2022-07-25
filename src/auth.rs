@@ -17,6 +17,12 @@ pub struct AccessToken(pub String);
 #[derive(Debug, Clone, Serialize, Deserialize, FromStr, Display)]
 pub struct RefreshToken(pub String);
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Credentials {
+    pub access_token: AccessToken,
+    pub refresh_token: Option<RefreshToken>,
+}
+
 impl Api {
     /// Currently the only way to "authenticate" to an access token for this library.
     pub async fn from_interactive_url() -> Result<Api, TeslatteError> {
@@ -39,6 +45,17 @@ impl Api {
         ))
     }
 
+    pub fn from_credentials(credentials: Credentials) -> Api {
+        Api::new(credentials.access_token, credentials.refresh_token)
+    }
+
+    pub fn credentials(&self) -> Credentials {
+        Credentials {
+            access_token: self.access_token.clone(),
+            refresh_token: self.refresh_token.clone(),
+        }
+    }
+
     pub async fn get_login_url_for_user() -> LoginForm {
         let code = Code::new();
         let state = random_string(8);
@@ -59,6 +76,19 @@ impl Api {
             redirect_uri: "https://auth.tesla.com/void/callback".into(),
         };
         Self::auth_post(url, &payload).await
+    }
+
+    /// Refresh the internally stored access token using the known refresh token.
+    pub async fn refresh(&mut self) -> Result<(), TeslatteError> {
+        match &self.refresh_token {
+            None => Err(TeslatteError::NoRefreshToken),
+            Some(refresh_token) => {
+                let response = Self::refresh_token(&refresh_token).await?;
+                self.access_token = response.access_token;
+                self.refresh_token = Some(response.refresh_token);
+                Ok(())
+            }
+        }
     }
 
     pub async fn refresh_token(
