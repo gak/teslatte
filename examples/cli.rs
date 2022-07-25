@@ -8,9 +8,10 @@ use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, Authentication, RefreshToken};
 use teslatte::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
 use teslatte::energy::EnergySiteId;
-use teslatte::powerwall::PowerwallId;
+use teslatte::powerwall::{PowerwallEnergyHistoryValues, PowerwallId};
 use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
 use teslatte::{Api, VehicleId};
+use tracing_subscriber::util::SubscriberInitExt;
 
 /// Teslatte
 ///
@@ -145,6 +146,18 @@ impl PowerwallArgs {
             PowerwallCommand::Status => {
                 dbg!(api.powerwall_status(&self.id).await?);
             }
+            PowerwallCommand::History => {
+                dbg!(
+                    api.powerwall_energy_history(&PowerwallEnergyHistoryValues {
+                        powerwall_id: self.id.clone(),
+                        period: HistoryPeriod::Day,
+                        kind: HistoryKind::Power,
+                        start_date: None,
+                        end_date: None
+                    })
+                    .await?
+                );
+            }
         }
         Ok(())
     }
@@ -154,6 +167,8 @@ impl PowerwallArgs {
 enum PowerwallCommand {
     /// Show the status of the Powerwall.
     Status,
+
+    History,
 }
 
 #[tokio::main]

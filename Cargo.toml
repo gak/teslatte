@@ -26,6 +26,7 @@ regex = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
 strum = { version = "0.24.1", features = ["derive"] }
 urlencoding = "2.1.0"
+derive_more = "0.99"
 
 [dev-dependencies]
 test-log = { version = "0.2", default-features = false, features = ["trace"] }

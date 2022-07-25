@@ -1,11 +1,11 @@
 use crate::auth::AccessToken;
 use crate::error::TeslatteError;
 use chrono::{DateTime, SecondsFormat, TimeZone};
+use derive_more::{Display, FromStr};
 use miette::IntoDiagnostic;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
-use std::str::FromStr;
 use tracing::{debug, instrument, trace};
 
 pub mod auth;
@@ -24,21 +24,8 @@ trait Values {
 /// Vehicle ID used by the owner-api endpoint.
 ///
 /// This data comes from [`Api::vehicles()`] `id` field.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Display, FromStr)]
 pub struct VehicleId(u64);
-
-impl Display for VehicleId {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl FromStr for VehicleId {
-    type Err = miette::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(VehicleId(s.parse().into_diagnostic()?))
-    }
-}
 
 /// Vehicle ID used by other endpoints.
 ///
@@ -279,6 +266,14 @@ where
     Tz::Offset: Display,
 {
     d.to_rfc3339_opts(SecondsFormat::Secs, true)
+}
+
+pub(crate) fn join_query_pairs(pairs: &[(&str, String)]) -> String {
+    pairs
+        .iter()
+        .map(|(k, v)| format!("{}={}", k, v.replace("+", "%2B")))
+        .collect::<Vec<_>>()
+        .join("&")
 }
 
 #[cfg(test)]

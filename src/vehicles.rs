@@ -19,9 +19,8 @@ impl Api {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct VehicleData {
-    // Leave as first field for serde untagged.
-    pub vehicle_id: ExternalVehicleId,
     pub id: VehicleId,
+    pub vehicle_id: ExternalVehicleId,
     pub user_id: i64,
     pub vin: String,
     pub display_name: String,

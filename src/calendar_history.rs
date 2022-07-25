@@ -1,9 +1,9 @@
 use crate::energy::EnergySiteId;
-use crate::{get_args, rfc3339, Api};
+use crate::{get_args, join_query_pairs, rfc3339, Api};
 use crate::{TeslatteError, Values};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{Display, EnumString, IntoStaticStr};
 use urlencoding::encode;
 
 #[rustfmt::skip]
@@ -11,14 +11,14 @@ impl Api {
     get_args!(energy_sites_calendar_history, CalendarHistory, "/energy_sites/{}/calendar_history", CalendarHistoryValues);
 }
 
-#[derive(Debug, Clone, Display, EnumString)]
+#[derive(Debug, Clone, Display, EnumString, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum HistoryKind {
     Power,
     Energy,
 }
 
-#[derive(Debug, Clone, Display, EnumString)]
+#[derive(Debug, Clone, Display, EnumString, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum HistoryPeriod {
     Day,
@@ -28,7 +28,10 @@ pub enum HistoryPeriod {
 }
 
 pub struct CalendarHistoryValues {
+    // Modify URL:
     pub site_id: EnergySiteId,
+
+    // Query params:
     pub period: HistoryPeriod,
     pub kind: HistoryKind,
     pub start_date: Option<DateTime<FixedOffset>>,
@@ -38,25 +41,19 @@ pub struct CalendarHistoryValues {
 impl Values for CalendarHistoryValues {
     fn format(&self, url: &str) -> String {
         let url = url.replace("{}", &format!("{}", self.site_id.0));
-        let mut pairs = vec![
+        let mut pairs: Vec<(&str, String)> = vec![
             ("period", self.period.to_string()),
             ("kind", self.kind.to_string()),
         ];
         if let Some(start_date) = self.start_date {
-            pairs.push(("start_date", rfc3339(&start_date)));
+            let start_date = rfc3339(&start_date);
+            pairs.push(("start_date", start_date));
         }
         if let Some(end_date) = self.end_date {
-            pairs.push(("end_date", rfc3339(&end_date)));
+            let end_date = rfc3339(&end_date);
+            pairs.push(("end_date", end_date));
         }
-        format!(
-            "{}?{}",
-            url,
-            pairs
-                .iter()
-                .map(|(k, v)| format!("{}={}", k, v.replace("+", "%2B")))
-                .collect::<Vec<_>>()
-                .join("&")
-        )
+        format!("{}?{}", url, join_query_pairs(&pairs))
     }
 }
 
@@ -83,8 +80,8 @@ pub struct PowerSeries {
     pub solar_power: f64,
     pub battery_power: f64,
     pub grid_power: f64,
-    pub grid_services_power: i64,
-    pub generator_power: i64,
+    pub grid_services_power: f64,
+    pub generator_power: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]

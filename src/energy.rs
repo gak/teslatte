@@ -42,9 +42,8 @@ pub enum EnergySite {
 /// This is assumed from https://tesla-api.timdorr.com/api-basics/products
 #[derive(Debug, Clone, Deserialize)]
 pub struct SolarData {
-    // `solar_type` must be first in the struct so serde can properly decode.
-    pub solar_type: String,
     pub energy_site_id: EnergySiteId,
+    pub solar_type: String,
     /// Should always be "solar".
     pub resource_type: String,
     pub id: String,
@@ -57,9 +56,8 @@ pub struct SolarData {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct PowerwallData {
-    // `battery_type` must be first in the struct so serde can properly decode.
+    pub energy_site_id: EnergySiteId,
     pub battery_type: String,
-    pub energy_site_id: i64,
     /// Should always be "battery".
     pub resource_type: String,
     pub site_name: String,
