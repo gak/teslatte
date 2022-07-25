@@ -5,7 +5,7 @@ use clap::{Args, Parser, Subcommand};
 use cli_vehicle::VehicleArgs;
 use miette::{miette, IntoDiagnostic, WrapErr};
 use serde::{Deserialize, Serialize};
-use teslatte::auth::{AccessToken, Authentication, RefreshToken};
+use teslatte::auth::{AccessToken, RefreshToken};
 use teslatte::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
 use teslatte::energy::EnergySiteId;
 use teslatte::powerwall::{PowerwallEnergyHistoryValues, PowerwallId};
@@ -179,9 +179,8 @@ async fn main() -> miette::Result<()> {
 
     match args.command {
         Command::Auth { save } => {
-            let auth = Authentication::new()?;
-            let (access_token, refresh_token) = auth.interactive_get_access_token().await?;
-            updated_tokens(save, access_token, refresh_token);
+            let api = Api::from_interactive_url().await?;
+            updated_tokens(save, &api);
         }
         Command::Refresh { refresh_token } => {
             let (save, refresh_token) = match refresh_token {
@@ -192,20 +191,22 @@ async fn main() -> miette::Result<()> {
                 }
             };
 
-            let auth = Authentication::new()?;
-            let response = auth.refresh_access_token(&refresh_token).await?;
-            updated_tokens(save, response.access_token, refresh_token);
+            let api = Api::from_refresh_token(&refresh_token).await?;
+            updated_tokens(save, &api);
         }
         Command::Api(api_args) => {
-            let access_token = match &api_args.access_token {
-                Some(a) => a.clone(),
+            let (access_token, refresh_token) = match &api_args.access_token {
+                Some(a) => (a.clone(), None),
                 None => {
                     let config = Config::load();
-                    config.access_token.clone()
+                    (
+                        config.access_token.clone(),
+                        Some(config.refresh_token.clone()),
+                    )
                 }
             };
 
-            let api = Api::new(&access_token);
+            let api = Api::new(access_token, refresh_token);
             match api_args.command {
                 ApiCommand::Vehicles => {
                     dbg!(api.vehicles().await?);
@@ -228,9 +229,11 @@ async fn main() -> miette::Result<()> {
     Ok(())
 }
 
-fn updated_tokens(save: bool, access_token: AccessToken, refresh_token: RefreshToken) {
-    println!("Access token: {}", access_token.0);
-    println!("Refresh token: {}", refresh_token.0);
+fn updated_tokens(save: bool, api: &Api) {
+    let access_token = api.access_token.clone();
+    let refresh_token = api.refresh_token.clone().unwrap();
+    println!("Access token: {}", access_token);
+    println!("Refresh token: {}", refresh_token);
     if save {
         Config {
             access_token,

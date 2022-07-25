@@ -1,4 +1,4 @@
-use crate::auth::AccessToken;
+use crate::auth::{AccessToken, RefreshToken};
 use crate::error::TeslatteError;
 use chrono::{DateTime, SecondsFormat, TimeZone};
 use derive_more::{Display, FromStr};
@@ -15,7 +15,7 @@ pub mod error;
 pub mod powerwall;
 pub mod vehicles;
 
-const API_URL: &str = "https://owner-api.teslamotors.com";
+const API_URL: &str = "https://owner-api.teslamotors.com/api/1";
 
 trait Values {
     fn format(&self, url: &str) -> String;
@@ -34,14 +34,16 @@ pub struct VehicleId(u64);
 pub struct ExternalVehicleId(u64);
 
 pub struct Api {
-    access_token: AccessToken,
+    pub access_token: AccessToken,
+    pub refresh_token: Option<RefreshToken>,
     client: Client,
 }
 
 impl Api {
-    pub fn new(access_token: &AccessToken) -> Self {
+    pub fn new(access_token: AccessToken, refresh_token: Option<RefreshToken>) -> Self {
         Api {
-            access_token: access_token.clone(),
+            access_token,
+            refresh_token,
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(10))
                 .build()
@@ -86,44 +88,47 @@ impl Api {
     }
 
     #[instrument(skip(self))]
-    async fn post<S>(&self, path: &str, body: S) -> Result<(), TeslatteError>
+    async fn post<S>(&self, url: &str, body: S) -> Result<(), TeslatteError>
     where
         S: Serialize + Debug,
     {
         trace!("Fetching");
-        let url = format!("{}{}", API_URL, path);
-        let request = || {
+        let req_ctx = || {
             let payload =
                 serde_json::to_string(&body).expect("Should not fail creating the request struct.");
             format!("POST {} {payload}", &url)
         };
-        let response = self
-            .client
-            .post(&url)
-            .header("Authorization", format!("Bearer {}", self.access_token.0))
-            .header("Accept", "application/json")
-            .json(&body)
-            .send()
-            .await
-            .map_err(|source| TeslatteError::FetchError {
-                source,
-                request: request(),
-            })?;
+
+        let mut request = self.client.post(url).header("Accept", "application/json");
+        let auth = true;
+        if auth {
+            request = request.header("Authorization", format!("Bearer {}", self.access_token.0));
+        }
+        let response =
+            request
+                .json(&body)
+                .send()
+                .await
+                .map_err(|source| TeslatteError::FetchError {
+                    source,
+                    request: req_ctx(),
+                })?;
+
         let body = response
             .text()
             .await
             .map_err(|source| TeslatteError::FetchError {
                 source,
-                request: request(),
+                request: req_ctx(),
             })?;
-        let json = Self::parse_json::<PostResponse, _>(&body, request)?;
+        let json = Self::parse_json::<PostResponse, _>(&body, req_ctx)?;
         trace!(?json);
 
         if json.result {
             Ok(())
         } else {
             Err(TeslatteError::ServerError {
-                request: request(),
+                request: req_ctx(),
                 msg: json.reason,
                 description: None,
             })
@@ -198,8 +203,8 @@ struct Empty {}
 /// GET /api/1/[url]
 macro_rules! get {
     ($name:ident, $return_type:ty, $url:expr) => {
-        pub async fn $name(&self) -> Result<$return_type, TeslatteError> {
-            let url = format!("/api/1{}", $url);
+        pub async fn $name(&self) -> Result<$return_type, crate::error::TeslatteError> {
+            let url = format!("{}{}", crate::API_URL, $url);
             self.get(&url).await
         }
     };
@@ -211,9 +216,12 @@ pub(crate) use get;
 /// Pass in the URL as a format string with one arg, which has to impl Display.
 macro_rules! get_arg {
     ($name:ident, $return_type:ty, $url:expr, $arg_type:ty) => {
-        pub async fn $name(&self, arg: &$arg_type) -> miette::Result<$return_type, TeslatteError> {
+        pub async fn $name(
+            &self,
+            arg: &$arg_type,
+        ) -> miette::Result<$return_type, crate::error::TeslatteError> {
             let url = format!($url, arg);
-            let url = format!("/api/1{}", url);
+            let url = format!("{}{}", crate::API_URL, url);
             self.get(&url).await
         }
     };
@@ -223,9 +231,12 @@ pub(crate) use get_arg;
 /// GET /api/1/[url] with a struct.
 macro_rules! get_args {
     ($name:ident, $return_type:ty, $url:expr, $args:ty) => {
-        pub async fn $name(&self, values: &$args) -> miette::Result<$return_type, TeslatteError> {
+        pub async fn $name(
+            &self,
+            values: &$args,
+        ) -> miette::Result<$return_type, crate::error::TeslatteError> {
             let url = values.format($url);
-            let url = format!("/api/1{}", url);
+            let url = format!("{}{}", crate::API_URL, url);
             self.get(&url).await
         }
     };
@@ -239,9 +250,9 @@ macro_rules! post_arg {
             &self,
             arg: &$arg_type,
             data: &$request_type,
-        ) -> miette::Result<(), TeslatteError> {
+        ) -> miette::Result<(), crate::error::TeslatteError> {
             let url = format!($url, arg);
-            let url = format!("/api/1{}", url);
+            let url = format!("{}{}", crate::API_URL, url);
             self.post(&url, data).await
         }
     };
@@ -251,9 +262,12 @@ pub(crate) use post_arg;
 /// Post like above but with an empty body using the Empty struct.
 macro_rules! post_arg_empty {
     ($name:ident, $url:expr, $arg_type:ty) => {
-        pub async fn $name(&self, arg: &$arg_type) -> miette::Result<(), TeslatteError> {
+        pub async fn $name(
+            &self,
+            arg: &$arg_type,
+        ) -> miette::Result<(), crate::error::TeslatteError> {
             let url = format!($url, arg);
-            let url = format!("/api/1{}", url);
+            let url = format!("{}{}", crate::API_URL, url);
             self.post(&url, &Empty {}).await
         }
     };

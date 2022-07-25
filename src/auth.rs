@@ -1,72 +1,45 @@
-use crate::TeslatteError;
 use crate::TeslatteError::UnhandledReqwestError;
+use crate::{Api, TeslatteError};
+use derive_more::{Display, FromStr};
 use rand::Rng;
 use reqwest::Client;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::io::{stdin, stdout, Write};
-use std::str::FromStr;
 use url::Url;
 
 const AUTHORIZE_URL: &str = "https://auth.tesla.com/oauth2/v3/authorize";
 const TOKEN_URL: &str = "https://auth.tesla.com/oauth2/v3/token";
 
-pub struct Authentication {
-    client: Client,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromStr, Display)]
 pub struct AccessToken(pub String);
 
-impl FromStr for AccessToken {
-    type Err = TeslatteError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(AccessToken(s.to_string()))
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromStr, Display)]
 pub struct RefreshToken(pub String);
 
-impl FromStr for RefreshToken {
-    type Err = TeslatteError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(RefreshToken(s.to_string()))
-    }
-}
-
-impl Authentication {
-    pub fn new() -> Result<Self, TeslatteError> {
-        let client = Client::builder()
-            .cookie_store(false)
-            .build()
-            .map_err(UnhandledReqwestError)?;
-        Ok(Self { client })
-    }
-
-    /// Currently the only way to get an access token via this library.
-    pub async fn interactive_get_access_token(
-        &self,
-    ) -> Result<(AccessToken, RefreshToken), TeslatteError> {
-        let login_form = self.get_login_url_for_user().await;
+impl Api {
+    /// Currently the only way to "authenticate" to an access token for this library.
+    pub async fn from_interactive_url() -> Result<Api, TeslatteError> {
+        let login_form = Self::get_login_url_for_user().await;
         dbg!(&login_form);
-
         let callback_url =
             ask_input("Enter the URL of the 404 error page after you've logged in: ");
         let callback_code = Self::extract_callback_code_from_url(&callback_url)?;
+        let bearer = Self::exchange_auth_for_bearer(&login_form.code, &callback_code).await?;
+        let access_token = AccessToken(bearer.access_token);
+        let refresh_token = RefreshToken(bearer.refresh_token);
+        Ok(Api::new(access_token, Some(refresh_token)))
+    }
 
-        let bearer = self
-            .exchange_auth_for_bearer(&login_form.code, &callback_code)
-            .await?;
-        let refresh_token = bearer.refresh_token.clone();
-
-        Ok((
-            AccessToken(bearer.access_token),
-            RefreshToken(refresh_token),
+    pub async fn from_refresh_token(refresh_token: &RefreshToken) -> Result<Api, TeslatteError> {
+        let response = Self::refresh_token(&refresh_token).await?;
+        Ok(Api::new(
+            response.access_token,
+            Some(response.refresh_token),
         ))
     }
 
-    pub async fn get_login_url_for_user(&self) -> LoginForm {
+    pub async fn get_login_url_for_user() -> LoginForm {
         let code = Code::new();
         let state = random_string(8);
         let url = Self::login_url(&code, &state);
@@ -74,7 +47,6 @@ impl Authentication {
     }
 
     async fn exchange_auth_for_bearer(
-        &self,
         code: &Code,
         callback_code: &str,
     ) -> Result<BearerTokenResponse, TeslatteError> {
@@ -86,11 +58,10 @@ impl Authentication {
             code_verifier: code.verifier.clone(),
             redirect_uri: "https://auth.tesla.com/void/callback".into(),
         };
-        self.post(url, &payload).await
+        Self::auth_post(url, &payload).await
     }
 
-    pub async fn refresh_access_token(
-        &self,
+    pub async fn refresh_token(
         refresh_token: &RefreshToken,
     ) -> Result<RefreshTokenResponse, TeslatteError> {
         let url = "https://auth.tesla.com/oauth2/v3/token";
@@ -100,16 +71,15 @@ impl Authentication {
             refresh_token: refresh_token.0.clone(),
             scope: "openid email offline_access".into(),
         };
-        self.post(url, &payload).await
+        Self::auth_post(url, &payload).await
     }
 
-    async fn post<'a, S, D>(&self, url: &str, payload: &S) -> Result<D, TeslatteError>
+    async fn auth_post<'a, S, D>(url: &str, payload: &S) -> Result<D, TeslatteError>
     where
         S: Serialize,
         D: DeserializeOwned,
     {
-        let response = self
-            .client
+        let response = Client::new()
             .post(url)
             .header("Accept", "application/json")
             .json(payload)
@@ -187,7 +157,6 @@ pub struct LoginForm {
     state: String,
 }
 
-// These can be probably &str.
 #[derive(Debug, Serialize)]
 struct BearerTokenRequest {
     grant_type: String,
