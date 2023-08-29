@@ -68,7 +68,7 @@ pub struct ChargeState {
     pub charge_port_door_open: bool,
     pub charge_port_latch: String,
     pub charge_rate: f64,
-    pub charge_to_max_range: bool,
+    pub charge_to_max_range: Option<bool>,
     pub charger_actual_current: i64,
     pub charger_phases: Option<i64>,
     pub charger_pilot_current: i64,
