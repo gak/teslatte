@@ -18,7 +18,7 @@ async fn main() {
     let vehicles = api.vehicles().await.unwrap();
     dbg!(&vehicles);
 
-    if vehicles.len() > 0 {
+    if !vehicles.is_empty() {
         let vehicle_data = api.vehicle_data(&vehicles[0].id).await.unwrap();
         dbg!(vehicle_data);
 

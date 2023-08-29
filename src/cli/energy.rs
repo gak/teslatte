@@ -26,13 +26,13 @@ impl EnergySiteArgs {
                 let start_date = args
                     .start
                     .as_ref()
-                    .map(|s| DateTime::parse_from_rfc3339(&s).into_diagnostic())
+                    .map(|s| DateTime::parse_from_rfc3339(s).into_diagnostic())
                     .transpose()
                     .wrap_err("start_date")?;
                 let end_date = args
                     .end
                     .as_ref()
-                    .map(|s| DateTime::parse_from_rfc3339(&s).into_diagnostic())
+                    .map(|s| DateTime::parse_from_rfc3339(s).into_diagnostic())
                     .transpose()
                     .wrap_err("end_date")?;
                 let values = CalendarHistoryValues {

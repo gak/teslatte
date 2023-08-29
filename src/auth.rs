@@ -37,7 +37,7 @@ impl Api {
     }
 
     pub async fn from_refresh_token(refresh_token: &RefreshToken) -> Result<Api, TeslatteError> {
-        let response = Self::refresh_token(&refresh_token).await?;
+        let response = Self::refresh_token(refresh_token).await?;
         Ok(Api::new(
             response.access_token,
             Some(response.refresh_token),
@@ -82,7 +82,7 @@ impl Api {
         match &self.refresh_token {
             None => Err(TeslatteError::NoRefreshToken),
             Some(refresh_token) => {
-                let response = Self::refresh_token(&refresh_token).await?;
+                let response = Self::refresh_token(refresh_token).await?;
                 self.access_token = response.access_token;
                 self.refresh_token = Some(response.refresh_token);
                 Ok(())

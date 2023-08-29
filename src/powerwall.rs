@@ -35,7 +35,7 @@ pub struct PowerwallEnergyHistoryValues {
 
 impl Values for PowerwallEnergyHistoryValues {
     fn format(&self, url: &str) -> String {
-        let url = url.replace("{}", &format!("{}", self.powerwall_id.0));
+        let url = url.replace("{}", &self.powerwall_id.0.to_string());
         let mut pairs: Vec<(&str, String)> = vec![
             ("period", self.period.to_string()),
             ("kind", self.kind.to_string()),

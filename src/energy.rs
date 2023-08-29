@@ -119,19 +119,19 @@ mod tests {
 
         if let EnergySite::Powerwall(data) = serde_json::from_str(json).unwrap() {
             assert_eq!(data.battery_type, "ac_powerwall");
-            assert_eq!(data.backup_capable, true);
+            assert!(data.backup_capable);
             assert_eq!(data.battery_power, -280);
-            assert_eq!(data.sync_grid_alert_enabled, true);
-            assert_eq!(data.breaker_alert_enabled, false);
-            assert_eq!(data.components.battery, true);
+            assert!(data.sync_grid_alert_enabled);
+            assert!(!data.breaker_alert_enabled);
+            assert!(data.components.battery);
             assert_eq!(
                 data.components.battery_type,
                 Some("ac_powerwall".to_string())
             );
-            assert_eq!(data.components.solar, true);
+            assert!(data.components.solar);
             assert_eq!(data.components.solar_type, Some("pv_panel".to_string()));
-            assert_eq!(data.components.grid, true);
-            assert_eq!(data.components.load_meter, true);
+            assert!(data.components.grid);
+            assert!(data.components.load_meter);
             assert_eq!(data.components.market_type, "residential");
         } else {
             panic!("Expected PowerwallData");
@@ -220,8 +220,8 @@ mod tests {
             assert_eq!(v.access_type, "OWNER");
             assert_eq!(v.tokens, vec!["asdf1234"]);
             assert_eq!(v.state, "online");
-            assert_eq!(v.in_service, false);
-            assert_eq!(v.calendar_enabled, true);
+            assert!(!v.in_service);
+            assert!(v.calendar_enabled);
             assert_eq!(v.api_version, 42);
             assert_eq!(v.backseat_token, None);
             assert_eq!(v.backseat_token_updated_at, None);

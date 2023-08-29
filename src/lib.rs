@@ -285,7 +285,7 @@ where
 pub(crate) fn join_query_pairs(pairs: &[(&str, String)]) -> String {
     pairs
         .iter()
-        .map(|(k, v)| format!("{}={}", k, v.replace("+", "%2B")))
+        .map(|(k, v)| format!("{}={}", k, v.replace('+', "%2B")))
         .collect::<Vec<_>>()
         .join("&")
 }
