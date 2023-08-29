@@ -42,7 +42,7 @@ impl EnergySiteArgs {
                     start_date,
                     end_date,
                 };
-                print_json(api.energy_sites_calendar_history(&values).await?);
+                print_json(api.energy_sites_calendar_history(&values).await);
             }
         }
         Ok(())

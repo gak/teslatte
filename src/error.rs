@@ -6,6 +6,7 @@ pub enum TeslatteError {
         request: String,
         msg: String,
         description: Option<String>,
+        body: Option<String>,
     },
 
     #[error("{request} unhandled server response: {body}")]

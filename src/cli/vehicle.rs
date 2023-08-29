@@ -36,24 +36,28 @@ impl VehicleArgs {
     pub async fn run(self, api: &Api) -> miette::Result<()> {
         match self.command {
             VehicleCommand::Data => {
-                print_json(api.vehicle_data(&self.id).await?);
+                print_json(api.vehicle_data(&self.id).await);
             }
             VehicleCommand::ChargeState => {
-                print_json(api.charge_state(&self.id).await?);
+                print_json(api.charge_state(&self.id).await);
             }
             VehicleCommand::SetChargeLimit { percent } => {
-                api.set_charge_limit(&self.id, &SetChargeLimit { percent })
-                    .await?;
+                print_json(
+                    api.set_charge_limit(&self.id, &SetChargeLimit { percent })
+                        .await,
+                );
             }
             VehicleCommand::SetChargingAmps { charging_amps } => {
-                api.set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
-                    .await?;
+                print_json(
+                    api.set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
+                        .await,
+                );
             }
             VehicleCommand::ChargeStart => {
-                api.charge_start(&self.id).await?;
+                print_json(api.charge_start(&self.id).await);
             }
             VehicleCommand::ChargeStop => {
-                api.charge_stop(&self.id).await?;
+                print_json(api.charge_stop(&self.id).await);
             }
         }
         Ok(())

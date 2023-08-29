@@ -38,7 +38,7 @@ pub struct VehicleData {
     /// gak: This was null for me, assuming String.
     pub backseat_token_updated_at: Option<String>,
 
-    /// Some of these have been null for me, so making them all Option.
+    /// gak: Some of these have been null for me, so making them all Option.
     pub charge_state: Option<ChargeState>,
     pub climate_state: Option<ClimateState>,
     pub drive_state: Option<DriveState>,

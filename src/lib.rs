@@ -89,7 +89,7 @@ impl Api {
     }
 
     #[instrument(skip(self))]
-    async fn post<S>(&self, url: &str, body: S) -> Result<(), TeslatteError>
+    async fn post<S>(&self, url: &str, body: S) -> Result<Data<PostResponse>, TeslatteError>
     where
         S: Serialize + Debug,
     {
@@ -122,16 +122,17 @@ impl Api {
                 source,
                 request: req_ctx(),
             })?;
-        let json = Self::parse_json::<PostResponse, _>(&body, req_ctx)?;
-        trace!(?json);
+        let data = Self::parse_json::<PostResponse, _>(&body, req_ctx)?;
+        trace!(?data);
 
-        if json.result {
-            Ok(())
+        if data.result {
+            Ok(Data { data, body })
         } else {
             Err(TeslatteError::ServerError {
                 request: req_ctx(),
-                msg: json.reason,
+                msg: data.reason,
                 description: None,
+                body: Some(body),
             })
         }
     }
@@ -157,6 +158,7 @@ impl Api {
                 request: request(),
                 msg: e.error,
                 description: e.error_description,
+                body: Some(body.to_owned()),
             }),
         }
     }
@@ -187,7 +189,7 @@ impl<T> From<ResponseDeserializer<T>> for Response<T> {
 }
 
 #[derive(Debug, Deserialize)]
-struct PostResponse {
+pub struct PostResponse {
     reason: String,
     result: bool,
 }
@@ -281,7 +283,7 @@ macro_rules! post_arg {
             &self,
             arg: &$arg_type,
             data: &$request_type,
-        ) -> miette::Result<(), crate::error::TeslatteError> {
+        ) -> miette::Result<crate::Data<crate::PostResponse>, crate::error::TeslatteError> {
             let url = format!($url, arg);
             let url = format!("{}{}", crate::API_URL, url);
             self.post(&url, data).await
@@ -296,7 +298,7 @@ macro_rules! post_arg_empty {
         pub async fn $name(
             &self,
             arg: &$arg_type,
-        ) -> miette::Result<(), crate::error::TeslatteError> {
+        ) -> miette::Result<crate::Data<crate::PostResponse>, crate::error::TeslatteError> {
             let url = format!($url, arg);
             let url = format!("{}{}", crate::API_URL, url);
             self.post(&url, &Empty {}).await

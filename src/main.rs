@@ -106,13 +106,13 @@ async fn main() -> miette::Result<()> {
             let api = Api::new(access_token, refresh_token);
             match api_args.command {
                 ApiCommand::Vehicles => {
-                    print_json(api.vehicles().await?);
+                    print_json(api.vehicles().await);
                 }
                 ApiCommand::Vehicle(v) => {
                     v.run(&api).await?;
                 }
                 ApiCommand::EnergySites => {
-                    print_json(api.energy_sites().await?);
+                    print_json(api.energy_sites().await);
                 }
                 ApiCommand::EnergySite(e) => {
                     e.run(&api).await?;
