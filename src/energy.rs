@@ -29,9 +29,9 @@ pub struct GatewayId(String);
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum EnergySite {
-    Vehicle(VehicleData),
-    Solar(SolarData),
-    Powerwall(PowerwallData),
+    Vehicle(Box<VehicleData>),
+    Solar(Box<SolarData>),
+    Powerwall(Box<PowerwallData>),
 }
 
 /// This is assumed from https://tesla-api.timdorr.com/api-basics/products

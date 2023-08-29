@@ -37,6 +37,7 @@ pub struct ExternalVehicleId(u64);
 
 pub struct Api {
     pub access_token: AccessToken,
+    // TODO: Why is this an Option?
     pub refresh_token: Option<RefreshToken>,
     client: Client,
 }

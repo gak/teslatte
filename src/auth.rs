@@ -32,9 +32,17 @@ impl Api {
     /// Currently the only way to "authenticate" to an access token for this library.
     pub async fn from_interactive_url() -> Result<Api, TeslatteError> {
         let login_form = Self::get_login_url_for_user().await;
-        dbg!(&login_form);
-        let callback_url =
-            ask_input("Enter the URL of the 404 error page after you've logged in: ");
+        println!("{}", "-".repeat(80));
+        println!("{}", login_form.url);
+        println!("{}", "-".repeat(80));
+        println!(
+            r#"Visit the URL above, and log in to your Tesla account if not already logged in.
+After you log in (or already logged in), it will redirect you to a 404 error
+page, where the URL will start with https://auth.tesla.com/void/callback?code=...
+"#
+        );
+        let callback_url = ask_input("Enter the whole URL of the 404 page: ");
+        println!(); // Newline to make the next output more separated and clear.
 
         let callback = Self::extract_callback_from_url(&callback_url)?;
         if callback.state != login_form.state {
@@ -224,9 +232,17 @@ struct BearerTokenRequest {
 struct BearerTokenResponse {
     access_token: String,
     refresh_token: String,
+
+    #[allow(dead_code)]
     expires_in: u32,
+
+    #[allow(dead_code)]
     state: String,
+
+    #[allow(dead_code)]
     token_type: String,
+
+    #[allow(dead_code)]
     id_token: String,
 }
 

@@ -76,7 +76,7 @@ async fn main() -> miette::Result<()> {
     match args.command {
         Command::Auth { save } => {
             let api = Api::from_interactive_url().await?;
-            updated_tokens(save, &api);
+            print_or_save_tokens(save, &api);
         }
         Command::Refresh { refresh_token } => {
             let (save, refresh_token) = match refresh_token {
@@ -88,7 +88,7 @@ async fn main() -> miette::Result<()> {
             };
 
             let api = Api::from_refresh_token(&refresh_token).await?;
-            updated_tokens(save, &api);
+            print_or_save_tokens(save, &api);
         }
         Command::Api(api_args) => {
             let (access_token, refresh_token) = match &api_args.access_token {
@@ -125,17 +125,20 @@ async fn main() -> miette::Result<()> {
     Ok(())
 }
 
-fn updated_tokens(save: bool, api: &Api) {
+fn print_or_save_tokens(save: bool, api: &Api) {
     let access_token = api.access_token.clone();
     let refresh_token = api.refresh_token.clone().unwrap();
-    println!("Access token: {}", access_token);
-    println!("Refresh token: {}", refresh_token);
+
     if save {
         Config {
             access_token,
             refresh_token,
         }
         .save();
+        println!("Saved tokens to cli.json");
+    } else {
+        println!("Access token: {}", access_token);
+        println!("Refresh token: {}", refresh_token);
     }
 }
 
