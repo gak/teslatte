@@ -1,5 +1,4 @@
-use crate::calendar_history::CalendarHistoryValues;
-use crate::cli::calendar_history::CalendarHistoryArgs;
+use crate::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
 use crate::cli::print_json;
 use crate::energy::EnergySiteId;
 use crate::Api;
@@ -48,4 +47,30 @@ impl EnergySiteArgs {
         }
         Ok(())
     }
+}
+
+/// Show the calendar history of an energy site. This is the same data that is shown in the Tesla app.
+///
+/// Use `energy_site_id` as the ID.
+///
+/// The `kind` argument must be `energy` or `power`.
+///
+/// Example:
+///
+/// teslatte api energy-site 1234567890 calendar-history power -s "2022-01-01T00:00:00Z" -e 2023-01-01T00:00:00Z -p month
+#[derive(Debug, Args)]
+pub struct CalendarHistoryArgs {
+    /// `energy` or `power`
+    pub kind: HistoryKind,
+
+    #[clap(short, long, default_value = "day")]
+    pub period: HistoryPeriod,
+
+    /// ISO8601 date-time for the start of the period, e.g. 2000-01-01T00:00:00Z
+    #[clap(short, long)]
+    pub start: Option<String>,
+
+    /// ISO8601 date-time for the end of the period, e.g. 2025-01-01T00:00:00Z
+    #[clap(short, long)]
+    pub end: Option<String>,
 }

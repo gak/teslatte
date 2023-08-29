@@ -12,6 +12,11 @@ fancy-errors = ["miette/fancy"]
 cli = ["dep:clap", "dep:tracing-subscriber"]
 cli-pretty-json = ["dep:colored_json"]
 
+[[bin]]
+name = "teslatte"
+path = "src/main.rs"
+required-features = ["cli"]
+
 [dependencies]
 miette = { version = "5.10.0", features = ["fancy"] }
 thiserror = "1.0.44"

@@ -1,9 +1,8 @@
-use crate::Data;
-
-pub mod calendar_history;
 pub mod energy;
 pub mod powerwall;
 pub mod vehicle;
+
+use crate::Data;
 
 pub fn print_json<T>(data: Data<T>) {
     #[cfg(feature = "cli-pretty-json")]
@@ -14,7 +13,6 @@ pub fn print_json<T>(data: Data<T>) {
 
     #[cfg(not(feature = "cli-pretty-json"))]
     {
-        println!("{:#?}", data.body());
-        panic!();
+        println!("{}", data.body());
     }
 }
