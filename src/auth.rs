@@ -214,9 +214,11 @@ pub struct Code {
 
 impl Code {
     fn new() -> Self {
-        let verifier = random_string(86);
-        let hex_digest = sha256::digest_bytes(verifier.as_bytes());
-        let challenge = base64::encode_config(&hex_digest, base64::URL_SAFE);
+        let verifier = pkce::code_verifier(86);
+        let challenge = pkce::code_challenge(&verifier);
+
+        // Unwrap should be OK here, since code_verifier() generates bytes from ASCII.
+        let verifier = String::from_utf8(verifier).unwrap();
 
         Self {
             verifier,
