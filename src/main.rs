@@ -1,12 +1,10 @@
-mod cli_vehicle;
-
 use chrono::DateTime;
 use clap::{Args, Parser, Subcommand};
-use cli_vehicle::VehicleArgs;
 use miette::{IntoDiagnostic, WrapErr};
 use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, RefreshToken};
 use teslatte::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
+use teslatte::cli::vehicle::VehicleArgs;
 use teslatte::energy::EnergySiteId;
 use teslatte::powerwall::{PowerwallEnergyHistoryValues, PowerwallId};
 use teslatte::Api;

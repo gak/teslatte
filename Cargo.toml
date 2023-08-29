@@ -5,9 +5,11 @@ description = "A Rust crate for querying the Tesla API."
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
-[lib]
-name = "teslatte"
-path = "src/lib.rs"
+[features]
+default = ["cli", "fancy"]
+
+fancy = ["miette/fancy"]
+cli = ["dep:clap", "dep:tracing-subscriber"]
 
 [dependencies]
 miette = { version = "5.1", features = ["fancy"] }
@@ -26,7 +28,8 @@ urlencoding = "2.1.0"
 derive_more = "0.99"
 pkce = "0.2.0"
 
+clap = { version = "3.2", features = ["derive", "env"], optional = true }
+tracing-subscriber = { version = "0.3.17", optional = true }
+
 [dev-dependencies]
-test-log = { version = "0.2", default-features = false, features = ["trace"] }
-tracing-subscriber = "0.3"
-clap = { version = "3.2", features = ["derive", "env"]}
+test-log = { version = "0.2.12", default-features = false, features = ["trace"] }

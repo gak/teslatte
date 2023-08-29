@@ -1,10 +1,6 @@
+use crate::vehicles::{SetChargeLimit, SetChargingAmps};
+use crate::{Api, VehicleId};
 use clap::{Args, Subcommand};
-use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
-use teslatte::{Api, VehicleId};
-
-pub fn main() {
-    todo!()
-}
 
 #[derive(Debug, Args)]
 pub struct VehicleArgs {

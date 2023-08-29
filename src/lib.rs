@@ -14,6 +14,9 @@ pub mod error;
 pub mod powerwall;
 pub mod vehicles;
 
+#[cfg(feature = "cli")]
+pub mod cli;
+
 const API_URL: &str = "https://owner-api.teslamotors.com/api/1";
 
 trait Values {
