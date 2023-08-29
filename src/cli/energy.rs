@@ -1,5 +1,6 @@
 use crate::calendar_history::CalendarHistoryValues;
 use crate::cli::calendar_history::CalendarHistoryArgs;
+use crate::cli::print_json;
 use crate::energy::EnergySiteId;
 use crate::Api;
 use chrono::DateTime;
@@ -42,8 +43,7 @@ impl EnergySiteArgs {
                     start_date,
                     end_date,
                 };
-                let history = api.energy_sites_calendar_history(&values).await?;
-                println!("{:#?}", history);
+                print_json(api.energy_sites_calendar_history(&values).await?);
             }
         }
         Ok(())

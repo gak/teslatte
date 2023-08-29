@@ -6,10 +6,11 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [features]
-default = ["cli", "fancy"]
+default = ["cli", "cli-pretty-json", "fancy-errors"]
 
-fancy = ["miette/fancy"]
+fancy-errors = ["miette/fancy"]
 cli = ["dep:clap", "dep:tracing-subscriber"]
+cli-pretty-json = ["dep:colored_json"]
 
 [dependencies]
 miette = { version = "5.10.0", features = ["fancy"] }
@@ -30,6 +31,7 @@ pkce = "0.2.0"
 
 clap = { version = "4.3.19", features = ["derive", "env"], optional = true }
 tracing-subscriber = { version = "0.3.17", optional = true }
+colored_json = { version = "3.2.0", optional = true }
 
 [dev-dependencies]
 test-log = { version = "0.2.12", default-features = false, features = ["trace"] }

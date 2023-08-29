@@ -1,3 +1,4 @@
+use crate::cli::print_json;
 use crate::vehicles::{SetChargeLimit, SetChargingAmps};
 use crate::{Api, VehicleId};
 use clap::{Args, Subcommand};
@@ -35,28 +36,24 @@ impl VehicleArgs {
     pub async fn run(self, api: &Api) -> miette::Result<()> {
         match self.command {
             VehicleCommand::Data => {
-                dbg!(api.vehicle_data(&self.id).await?);
+                print_json(api.vehicle_data(&self.id).await?);
             }
             VehicleCommand::ChargeState => {
-                dbg!(api.charge_state(&self.id).await?);
+                print_json(api.charge_state(&self.id).await?);
             }
             VehicleCommand::SetChargeLimit { percent } => {
-                dbg!(
-                    api.set_charge_limit(&self.id, &SetChargeLimit { percent })
-                        .await?
-                );
+                api.set_charge_limit(&self.id, &SetChargeLimit { percent })
+                    .await?;
             }
             VehicleCommand::SetChargingAmps { charging_amps } => {
-                dbg!(
-                    api.set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
-                        .await?
-                );
+                api.set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
+                    .await?;
             }
             VehicleCommand::ChargeStart => {
-                dbg!(api.charge_start(&self.id).await?);
+                api.charge_start(&self.id).await?;
             }
             VehicleCommand::ChargeStop => {
-                dbg!(api.charge_stop(&self.id).await?);
+                api.charge_stop(&self.id).await?;
             }
         }
         Ok(())

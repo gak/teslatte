@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, RefreshToken};
 use teslatte::cli::energy::EnergySiteArgs;
 use teslatte::cli::powerwall::PowerwallArgs;
+use teslatte::cli::print_json;
 use teslatte::cli::vehicle::VehicleArgs;
 use teslatte::Api;
 
@@ -10,7 +11,7 @@ use teslatte::Api;
 ///
 /// A command line interface for the Tesla API.
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(author, version)]
 struct Cli {
     #[clap(subcommand)]
     command: Command,
@@ -105,13 +106,13 @@ async fn main() -> miette::Result<()> {
             let api = Api::new(access_token, refresh_token);
             match api_args.command {
                 ApiCommand::Vehicles => {
-                    dbg!(api.vehicles().await?);
+                    print_json(api.vehicles().await?);
                 }
                 ApiCommand::Vehicle(v) => {
                     v.run(&api).await?;
                 }
                 ApiCommand::EnergySites => {
-                    dbg!(api.energy_sites().await?);
+                    print_json(api.energy_sites().await?);
                 }
                 ApiCommand::EnergySite(e) => {
                     e.run(&api).await?;

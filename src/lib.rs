@@ -55,7 +55,7 @@ impl Api {
     }
 
     #[instrument(skip(self))]
-    async fn get<D>(&self, url: &str) -> Result<D, TeslatteError>
+    async fn get<D>(&self, url: &str) -> Result<Data<D>, TeslatteError>
     where
         D: for<'de> Deserialize<'de> + Debug,
     {
@@ -82,10 +82,10 @@ impl Api {
             })?;
         trace!(?body);
 
-        let json = Self::parse_json::<D, _>(&body, request)?;
-        trace!(?json);
+        let data = Self::parse_json::<D, _>(&body, request)?;
+        trace!(?data);
 
-        Ok(json)
+        Ok(Data { data, body })
     }
 
     #[instrument(skip(self))]
@@ -201,10 +201,40 @@ struct ResponseError {
 #[derive(Debug, Serialize)]
 struct Empty {}
 
+/// Data and body from a request. The body can be used for debugging. The CLI can optionally
+/// print the raw JSON so the user can manipulate it.
+///
+/// This struct will automatically deref to the data type for better ergonomics.
+#[derive(Debug)]
+pub struct Data<T> {
+    data: T,
+    body: String,
+}
+
+impl<T> Data<T> {
+    pub fn data(&self) -> &T {
+        &self.data
+    }
+
+    pub fn body(&self) -> &str {
+        &self.body
+    }
+}
+
+impl<T> std::ops::Deref for Data<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
 /// GET /api/1/[url]
 macro_rules! get {
     ($name:ident, $return_type:ty, $url:expr) => {
-        pub async fn $name(&self) -> Result<$return_type, crate::error::TeslatteError> {
+        pub async fn $name(
+            &self,
+        ) -> Result<crate::Data<$return_type>, crate::error::TeslatteError> {
             let url = format!("{}{}", crate::API_URL, $url);
             self.get(&url).await
         }
@@ -220,7 +250,7 @@ macro_rules! get_arg {
         pub async fn $name(
             &self,
             arg: &$arg_type,
-        ) -> miette::Result<$return_type, crate::error::TeslatteError> {
+        ) -> miette::Result<crate::Data<$return_type>, crate::error::TeslatteError> {
             let url = format!($url, arg);
             let url = format!("{}{}", crate::API_URL, url);
             self.get(&url).await
@@ -235,7 +265,7 @@ macro_rules! get_args {
         pub async fn $name(
             &self,
             values: &$args,
-        ) -> miette::Result<$return_type, crate::error::TeslatteError> {
+        ) -> miette::Result<crate::Data<$return_type>, crate::error::TeslatteError> {
             let url = values.format($url);
             let url = format!("{}{}", crate::API_URL, url);
             self.get(&url).await
