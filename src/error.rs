@@ -36,6 +36,14 @@ pub enum TeslatteError {
     #[error("Callback URL did not contain a callback code.")]
     CouldNotFindCallbackCode,
 
+    #[error("Callback URL did not contain the state.")]
+    CouldNotFindState,
+
+    #[error(
+        "State in the callback URL did not match the state in the request: {request} != {callback}"
+    )]
+    StateMismatch { request: String, callback: String },
+
     #[error("Could not convert \"{0}\" to an EnergySiteId.")]
     DecodeEnergySiteIdError(String),
 
