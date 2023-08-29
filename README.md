@@ -5,29 +5,71 @@
 
 A Tesla API using the `owner-api.teslamotors.com` endpoint as well as "interactive" OAuth.
 
-Currently, it only supports some the `/api/1/vehicles` endpoint, but it will be expanded in the future.
+Currently, it only supports some the `/api/1/vehicles` endpoint, but might be expanded in the future.
 
 It is fairly trivial to add in new endpoints if you feel like creating a PR. Please let me know if your PR is a massive change before spending a lot of time on it.
 
 Thanks to https://tesla-api.timdorr.com/ for their excellent reference.
 
+## CLI
+
+There is a CLI that can be used to interact with the API. Example:
+
+```bash
+$ teslatte --help
+Usage: teslatte api [OPTIONS] <COMMAND>
+
+Commands:
+  vehicles      List of vehicles
+  vehicle       Specific Vehicle
+  energy-sites  List of energy sites
+  energy-site   Specific energy site
+  powerwall     Powerwall queries
+  help          Print this message or the help of the given subcommand(s)
+
+Options:
+  -a, --access-token <ACCESS_TOKEN>  Access token. If not provided, will try to load from the cli.json file [env: TESLA_ACCESS_TOKEN=]
+  -h, --help                         Print help
+  
+# Prints a URL to start the OAuth flow, then asks for the token URL, then saves the token to `cli.json`.
+$ teslatte auth --save 
+
+# Lists your vehicles:
+$ teslatte api vehicles
+{
+  "response": [{
+    "vehicle_id": 1234567890,
+  }]
+}
+
+$ teslatte api vehicle 1234567890
+Specific Vehicle
+
+Usage: teslatte api vehicle <ID> <COMMAND>
+
+Commands:
+  data               Get vehicle data
+  charge-state       Get charge state
+  set-charge-limit   Set charge limit
+  set-charging-amps  Set charge amps
+  charge-start       Start charging
+  charge-stop        Stop charging
+  help               Print this message or the help of the given subcommand(s)
+
+Arguments:
+  <ID>
+
+Options:
+  -h, --help  Print help
+  
+$ teslatte api vehicle 1234567890 data
+{ ... }
+
+```
+
 ## Example
 
 A basic example: [examples/basic.rs](examples/basic.rs)
-
-## Endpoints
-
-Here's a lazy dump of the endpoints I've implemented so far:
-
-```rust
-    get!(vehicles, Vec<Vehicle>, "");
-    get_v!(vehicle_data, VehicleData, "/vehicle_data");
-    get_v!(charge_state, ChargeState, "/data_request/charge_state");
-    post_vd!(set_charge_limit, SetChargeLimit, "/command/set_charge_limit");
-    post_vd!(set_charging_amps, SetChargingAmps, "/command/set_charging_amps");
-    post_v!(charge_start, "/command/charge_start");
-    post_v!(charge_stop, "/command/charge_stop");
-```
 
 ## License
 
