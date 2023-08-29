@@ -1,12 +1,9 @@
-use chrono::DateTime;
 use clap::{Args, Parser, Subcommand};
-use miette::{IntoDiagnostic, WrapErr};
 use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, RefreshToken};
-use teslatte::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
+use teslatte::cli::energy::EnergySiteArgs;
+use teslatte::cli::powerwall::PowerwallArgs;
 use teslatte::cli::vehicle::VehicleArgs;
-use teslatte::energy::EnergySiteId;
-use teslatte::powerwall::{PowerwallEnergyHistoryValues, PowerwallId};
 use teslatte::Api;
 
 /// Teslatte
@@ -68,103 +65,6 @@ enum ApiCommand {
 
     /// Powerwall queries.
     Powerwall(PowerwallArgs),
-}
-
-#[derive(Debug, Args)]
-struct EnergySiteArgs {
-    pub id: EnergySiteId,
-
-    #[clap(subcommand)]
-    pub command: EnergySiteCommand,
-}
-
-impl EnergySiteArgs {
-    pub async fn run(&self, api: &Api) -> miette::Result<()> {
-        match &self.command {
-            EnergySiteCommand::CalendarHistory(args) => {
-                let start_date = args
-                    .start
-                    .as_ref()
-                    .map(|s| DateTime::parse_from_rfc3339(&s).into_diagnostic())
-                    .transpose()
-                    .wrap_err("start_date")?;
-                let end_date = args
-                    .end
-                    .as_ref()
-                    .map(|s| DateTime::parse_from_rfc3339(&s).into_diagnostic())
-                    .transpose()
-                    .wrap_err("end_date")?;
-                let values = CalendarHistoryValues {
-                    site_id: self.id.clone(),
-                    kind: args.kind.clone(),
-                    period: args.period.clone(),
-                    start_date,
-                    end_date,
-                };
-                let history = api.energy_sites_calendar_history(&values).await?;
-                println!("{:#?}", history);
-            }
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Subcommand)]
-enum EnergySiteCommand {
-    CalendarHistory(CalendarHistoryArgs),
-}
-
-#[derive(Debug, Args)]
-struct CalendarHistoryArgs {
-    pub kind: HistoryKind,
-
-    #[clap(short, long, default_value = "day")]
-    pub period: HistoryPeriod,
-
-    #[clap(short, long)]
-    start: Option<String>,
-
-    #[clap(short, long)]
-    end: Option<String>,
-}
-
-#[derive(Debug, Args)]
-struct PowerwallArgs {
-    pub id: PowerwallId,
-
-    #[clap(subcommand)]
-    pub command: PowerwallCommand,
-}
-
-impl PowerwallArgs {
-    pub async fn run(&self, api: &Api) -> miette::Result<()> {
-        match self.command {
-            PowerwallCommand::Status => {
-                dbg!(api.powerwall_status(&self.id).await?);
-            }
-            PowerwallCommand::History => {
-                dbg!(
-                    api.powerwall_energy_history(&PowerwallEnergyHistoryValues {
-                        powerwall_id: self.id.clone(),
-                        period: HistoryPeriod::Day,
-                        kind: HistoryKind::Power,
-                        start_date: None,
-                        end_date: None
-                    })
-                    .await?
-                );
-            }
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Subcommand)]
-enum PowerwallCommand {
-    /// Show the status of the Powerwall.
-    Status,
-
-    History,
 }
 
 #[tokio::main]

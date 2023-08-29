@@ -2,6 +2,27 @@ use crate::vehicles::{SetChargeLimit, SetChargingAmps};
 use crate::{Api, VehicleId};
 use clap::{Args, Subcommand};
 
+#[derive(Debug, Subcommand)]
+pub enum VehicleCommand {
+    /// Get vehicle data.
+    Data,
+
+    /// Get charge state.
+    ChargeState,
+
+    /// Set charge limit.
+    SetChargeLimit { percent: u8 },
+
+    /// Set charge amps.
+    SetChargingAmps { charging_amps: i64 },
+
+    /// Start charging.
+    ChargeStart,
+
+    /// Stop charging.
+    ChargeStop,
+}
+
 #[derive(Debug, Args)]
 pub struct VehicleArgs {
     pub id: VehicleId,
@@ -40,25 +61,4 @@ impl VehicleArgs {
         }
         Ok(())
     }
-}
-
-#[derive(Debug, Subcommand)]
-pub enum VehicleCommand {
-    /// Get vehicle data.
-    Data,
-
-    /// Get charge state.
-    ChargeState,
-
-    /// Set charge limit.
-    SetChargeLimit { percent: u8 },
-
-    /// Set charge amps.
-    SetChargingAmps { charging_amps: i64 },
-
-    /// Start charging.
-    ChargeStart,
-
-    /// Stop charging.
-    ChargeStop,
 }
