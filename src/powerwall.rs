@@ -1,15 +1,9 @@
 use crate::calendar_history::{HistoryKind, HistoryPeriod};
 use crate::energy::GatewayId;
-use crate::error::TeslatteError;
-use crate::vehicles::VehicleData;
-use crate::{
-    get, get_arg, get_args, join_query_pairs, post_arg, post_arg_empty, rfc3339, Api, Empty,
-    ExternalVehicleId, Values, VehicleId,
-};
+use crate::{get_arg, get_args, join_query_pairs, rfc3339, Api, Values};
 use chrono::{DateTime, FixedOffset};
 use derive_more::{Display, FromStr};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 
 #[rustfmt::skip]
 impl Api {

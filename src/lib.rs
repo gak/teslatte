@@ -2,11 +2,10 @@ use crate::auth::{AccessToken, RefreshToken};
 use crate::error::TeslatteError;
 use chrono::{DateTime, SecondsFormat, TimeZone};
 use derive_more::{Display, FromStr};
-use miette::IntoDiagnostic;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Formatter};
-use tracing::{debug, instrument, trace};
+use std::fmt::{Debug, Display};
+use tracing::{instrument, trace};
 
 pub mod auth;
 pub mod calendar_history;
@@ -52,17 +51,15 @@ impl Api {
     }
 
     #[instrument(skip(self))]
-    async fn get<D>(&self, path: &str) -> Result<D, TeslatteError>
+    async fn get<D>(&self, url: &str) -> Result<D, TeslatteError>
     where
-        // I don't understand but it works: https://stackoverflow.com/a/60131725/11125
         D: for<'de> Deserialize<'de> + Debug,
     {
-        let url = format!("{}{}", API_URL, path);
         let request = || format!("GET {url}");
         trace!(?url, "Fetching");
         let response = self
             .client
-            .get(&url)
+            .get(url)
             .header("Authorization", format!("Bearer {}", self.access_token.0))
             .header("Accept", "application/json")
             .send()

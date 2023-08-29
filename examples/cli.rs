@@ -3,15 +3,13 @@ mod cli_vehicle;
 use chrono::DateTime;
 use clap::{Args, Parser, Subcommand};
 use cli_vehicle::VehicleArgs;
-use miette::{miette, IntoDiagnostic, WrapErr};
+use miette::{IntoDiagnostic, WrapErr};
 use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, RefreshToken};
 use teslatte::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
 use teslatte::energy::EnergySiteId;
 use teslatte::powerwall::{PowerwallEnergyHistoryValues, PowerwallId};
-use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
-use teslatte::{Api, VehicleId};
-use tracing_subscriber::util::SubscriberInitExt;
+use teslatte::Api;
 
 /// Teslatte
 ///

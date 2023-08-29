@@ -1,4 +1,3 @@
-use crate::TeslatteError::UnhandledReqwestError;
 use crate::{Api, TeslatteError};
 use derive_more::{Display, FromStr};
 use rand::Rng;

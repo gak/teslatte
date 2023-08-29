@@ -1,14 +1,9 @@
 use crate::error::TeslatteError;
 use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
-use crate::{
-    get, get_arg, get_args, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId,
-};
-use chrono::{DateTime, FixedOffset};
+use crate::{get, Api};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use strum::{Display, EnumString};
-use url::{Url, UrlQuery};
 
 #[rustfmt::skip]
 impl Api {
@@ -90,6 +85,7 @@ mod tests {
     use super::*;
     use crate::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
     use crate::Values;
+    use chrono::DateTime;
 
     #[test]
     fn energy_match_powerwall() {

@@ -1,7 +1,5 @@
-use clap::Parser;
 use std::env;
 use teslatte::auth::AccessToken;
-use teslatte::vehicles::SetChargeLimit;
 use teslatte::Api;
 
 #[tokio::main]
@@ -10,7 +8,11 @@ async fn main() {
 
     let api = match env::var("TESLA_ACCESS_TOKEN") {
         Ok(t) => Api::new(AccessToken(t), None),
-        Err(_) => Api::from_interactive_url().await.unwrap(),
+        Err(_) => {
+            let api = Api::from_interactive_url().await.unwrap();
+            println!("TOKEN: {:?}", api.access_token);
+            api
+        }
     };
 
     let vehicles = api.vehicles().await.unwrap();

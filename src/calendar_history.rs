@@ -1,10 +1,9 @@
 use crate::energy::EnergySiteId;
+use crate::Values;
 use crate::{get_args, join_query_pairs, rfc3339, Api};
-use crate::{TeslatteError, Values};
 use chrono::{DateTime, FixedOffset};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use strum::{Display, EnumString, IntoStaticStr};
-use urlencoding::encode;
 
 #[rustfmt::skip]
 impl Api {

@@ -1,6 +1,10 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Subcommand};
 use teslatte::vehicles::{SetChargeLimit, SetChargingAmps};
 use teslatte::{Api, VehicleId};
+
+pub fn main() {
+    todo!()
+}
 
 #[derive(Debug, Args)]
 pub struct VehicleArgs {

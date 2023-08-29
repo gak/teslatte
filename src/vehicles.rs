@@ -2,7 +2,6 @@
 ///
 /// Sometimes the API will return a null for a field where I've put in a non Option type, which
 /// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
-use crate::error::TeslatteError;
 use crate::{get, get_arg, post_arg, post_arg_empty, Api, Empty, ExternalVehicleId, VehicleId};
 use serde::{Deserialize, Serialize};
 
