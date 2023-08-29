@@ -214,8 +214,8 @@ mod tests {
             assert_eq!(v.user_id, 2222291283912);
             assert_eq!(v.vehicle_id.0, 333331238921);
             assert_eq!(v.vin, "T234567890123456789");
-            assert_eq!(v.display_name, "My Vehicle");
-            assert_eq!(v.option_codes, "ASDF,SDFG,DFGH");
+            assert_eq!(v.display_name.unwrap(), "My Vehicle");
+            assert_eq!(v.option_codes.unwrap(), "ASDF,SDFG,DFGH");
             assert_eq!(v.color, None);
             assert_eq!(v.access_type, "OWNER");
             assert_eq!(v.tokens, vec!["asdf1234"]);
