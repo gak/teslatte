@@ -12,7 +12,8 @@ token_tests:
     cargo run -- api energy-sites
 
 publish version:
-  sed -i "s/^version = \".*\"$/version = \"{{version}}\"/" Cargo.toml
+  # BSD sed
+  sed -i '' "s/^version = \".*\"$/version = \"{{version}}\"/" Cargo.toml
 
   git add Cargo.toml
   git commit -m "chore: v{{version}}"
