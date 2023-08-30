@@ -15,11 +15,11 @@ impl Api {
     post_arg_empty!(charge_port_door_close, "/vehicles/{}/command/charge_port_door_close", VehicleId);
     post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", VehicleId);
     post_arg!(set_charging_amps, SetChargingAmps, "/vehicles/{}/command/set_charging_amps", VehicleId);
-    // TODO: post_arg!(set_charging_scheduled_charging, SetChargingAmps, "/vehicles/{}/command/set_scheduled_charging", VehicleId);
     post_arg_empty!(charge_standard, "/vehicles/{}/command/charge_standard", VehicleId);
     post_arg_empty!(charge_max_range, "/vehicles/{}/command/charge_max_range", VehicleId);
     post_arg_empty!(charge_start, "/vehicles/{}/command/charge_start", VehicleId);
     post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", VehicleId);
+    post_arg!(set_scheduled_charging, SetScheduledCharging, "/vehicles/{}/command/set_scheduled_charging", VehicleId);
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -324,6 +324,21 @@ pub struct SetChargingAmps {
 pub struct SetChargeLimit {
     // TODO: percent: Percentage,
     pub percent: u8,
+}
+
+/// set_scheduled_charging
+#[derive(Debug, Serialize)]
+#[cfg_attr(feature = "cli", derive(clap::Args))]
+pub struct SetScheduledCharging {
+    /// Whether scheduled charging is enabled.
+    #[cfg_attr(feature = "cli", clap(short, long))]
+    pub enable: bool,
+
+    /// Minutes after midnight (local time) to start charging. If omitted it will be midnight.
+    ///
+    /// NOTE: In the future this will be a time instead of minutes.
+    #[cfg_attr(feature = "cli", clap(short, long))]
+    pub time: Option<u64>,
 }
 
 #[cfg(test)]
