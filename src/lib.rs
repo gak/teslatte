@@ -35,6 +35,11 @@ pub struct VehicleId(u64);
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExternalVehicleId(u64);
 
+pub enum MethodWithPayload {
+    GET,
+    POST(String),
+}
+
 pub struct Api {
     pub access_token: AccessToken,
     // TODO: Why is this an Option?
@@ -59,30 +64,20 @@ impl Api {
     where
         D: for<'de> Deserialize<'de> + Debug,
     {
-        let request = || format!("GET {url}");
-        trace!(?url, "Fetching");
-        let response = self
-            .client
-            .get(url)
-            .header("Authorization", format!("Bearer {}", self.access_token.0))
-            .header("Accept", "application/json")
-            .send()
-            .await
-            .map_err(|source| TeslatteError::FetchError {
-                source,
-                request: request(),
-            })?;
+        let request_context = || format!("GET {url}");
+
+        let response = self.request(MethodWithPayload::GET, url).await?;
 
         let body = response
             .text()
             .await
             .map_err(|source| TeslatteError::FetchError {
                 source,
-                request: request(),
+                request: request_context(),
             })?;
         trace!(?body);
 
-        let data = Self::parse_json::<D, _>(&body, request)?;
+        let data = Self::parse_json::<D, _>(&body, request_context)?;
         trace!(?data);
 
         Ok(Data { data, body })
@@ -94,47 +89,62 @@ impl Api {
         S: Serialize + Debug,
     {
         trace!("Fetching");
-        let req_ctx = || {
-            let payload =
-                serde_json::to_string(&body).expect("Should not fail creating the request struct.");
-            format!("POST {} {payload}", &url)
-        };
 
-        let mut request = self.client.post(url).header("Accept", "application/json");
-        let auth = true;
-        if auth {
-            request = request.header("Authorization", format!("Bearer {}", self.access_token.0));
-        }
-        let response =
-            request
-                .json(&body)
-                .send()
-                .await
-                .map_err(|source| TeslatteError::FetchError {
-                    source,
-                    request: req_ctx(),
-                })?;
+        let request_context = || format!("POST {url}");
+
+        let payload =
+            serde_json::to_string(&body).expect("Should not fail creating the request struct.");
+
+        let response = self.request(MethodWithPayload::POST(payload), url).await?;
 
         let body = response
             .text()
             .await
             .map_err(|source| TeslatteError::FetchError {
                 source,
-                request: req_ctx(),
+                request: request_context(),
             })?;
-        let data = Self::parse_json::<PostResponse, _>(&body, req_ctx)?;
+        let data = Self::parse_json::<PostResponse, _>(&body, request_context)?;
         trace!(?data);
 
         if data.result {
             Ok(Data { data, body })
         } else {
             Err(TeslatteError::ServerError {
-                request: req_ctx(),
+                request: request_context(),
                 msg: data.reason,
                 description: None,
                 body: Some(body),
             })
         }
+    }
+
+    async fn request(
+        &self,
+        method: MethodWithPayload,
+        url: &str,
+    ) -> Result<reqwest::Response, TeslatteError> {
+        let request_builder = match &method {
+            MethodWithPayload::GET => self.client.get(url),
+            MethodWithPayload::POST(payload) => self
+                .client
+                .post(url)
+                .header("Content-Type", "application/json")
+                .body(payload.clone()),
+        };
+
+        request_builder
+            .header("Accept", "application/json")
+            .header("Authorization", format!("Bearer {}", self.access_token.0))
+            .send()
+            .await
+            .map_err(|source| TeslatteError::FetchError {
+                source,
+                request: match method {
+                    MethodWithPayload::GET => format!("GET {url}"),
+                    MethodWithPayload::POST(payload) => format!("POST {url} {payload}"),
+                },
+            })
     }
 
     // The `request` argument is for additional context in the error.
