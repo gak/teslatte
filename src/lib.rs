@@ -5,7 +5,7 @@ use derive_more::{Display, FromStr};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
-use tracing::{instrument, trace};
+use tracing::debug;
 
 pub mod auth;
 pub mod calendar_history;
@@ -68,7 +68,6 @@ impl Api {
         }
     }
 
-    #[instrument(skip(self))]
     async fn get<D>(&self, url: &str) -> Result<ResponseData<D>, TeslatteError>
     where
         D: for<'de> Deserialize<'de> + Debug,
@@ -76,29 +75,25 @@ impl Api {
         self.request(&RequestData::GET { url }).await
     }
 
-    #[instrument(skip(self))]
     async fn post<S>(&self, url: &str, body: S) -> Result<ResponseData<PostResponse>, TeslatteError>
     where
         S: Serialize + Debug,
     {
-        // let request_context = || format!("POST {url} {payload}");
-
         let payload =
             &serde_json::to_string(&body).expect("Should not fail creating the request struct.");
-
         let request_data = RequestData::POST { url, payload };
         let data = self.request::<PostResponse>(&request_data).await?;
 
-        if data.data.result {
-            Ok(data)
-        } else {
-            Err(TeslatteError::ServerError {
+        if !data.data.result {
+            return Err(TeslatteError::ServerError {
                 request: format!("{request_data}"),
                 msg: data.data.reason,
                 description: None,
                 body: Some(data.body),
-            })
+            });
         }
+
+        Ok(data)
     }
 
     async fn request<T>(
@@ -108,7 +103,7 @@ impl Api {
     where
         T: for<'de> Deserialize<'de> + Debug,
     {
-        trace!("{request_data}");
+        debug!("{request_data}");
 
         let request_builder = match request_data {
             RequestData::GET { url } => self.client.get(*url),
@@ -134,6 +129,8 @@ impl Api {
                 source,
                 request: format!("{request_data}"),
             })?;
+
+        debug!("Response: {response_body}");
 
         Self::parse_json(request_data, response_body)
     }
