@@ -20,6 +20,7 @@ impl Api {
     post_arg_empty!(charge_start, "/vehicles/{}/command/charge_start", VehicleId);
     post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", VehicleId);
     post_arg!(set_scheduled_charging, SetScheduledCharging, "/vehicles/{}/command/set_scheduled_charging", VehicleId);
+    post_arg!(set_scheduled_departure, SetScheduledDeparture, "/vehicles/{}/command/set_scheduled_departure", VehicleId);
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -339,6 +340,38 @@ pub struct SetScheduledCharging {
     /// NOTE: In the future this will be a time instead of minutes.
     #[cfg_attr(feature = "cli", clap(short, long))]
     pub time: Option<u64>,
+}
+
+#[derive(Debug, Serialize)]
+#[cfg_attr(feature = "cli", derive(clap::Args))]
+pub struct SetScheduledDeparture {
+    /// Whether scheduled departure is enabled.
+    #[cfg_attr(feature = "cli", clap(short, long))]
+    pub enable: bool,
+
+    /// Minutes after midnight (local time) to depart.
+    ///
+    /// NOTE: In the future this will be a time instead of minutes.
+    #[cfg_attr(feature = "cli", clap(short, long))]
+    pub departure_time: Option<u64>,
+
+    #[cfg_attr(feature = "cli", clap(short, long))]
+    pub preconditioning_enabled: bool,
+
+    #[cfg_attr(feature = "cli", clap(short = 'w', long))]
+    pub preconditioning_weekdays_only: bool,
+
+    #[cfg_attr(feature = "cli", clap(short, long))]
+    pub off_peak_charging_enabled: bool,
+
+    #[cfg_attr(feature = "cli", clap(short = 'y', long))]
+    pub off_peak_charging_weekdays_only: bool,
+
+    /// Minutes after midnight (local time) to end off peak charging.
+    ///
+    /// NOTE: In the future this will be a time instead of minutes.
+    #[cfg_attr(feature = "cli", clap(short = 'n', long))]
+    pub end_off_peak_time: Option<u64>,
 }
 
 #[cfg(test)]

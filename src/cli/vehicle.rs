@@ -1,5 +1,7 @@
 use crate::cli::print_json;
-use crate::vehicles::{SetChargeLimit, SetChargingAmps, SetScheduledCharging};
+use crate::vehicles::{
+    SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture,
+};
 use crate::{Api, VehicleId};
 use clap::{Args, Subcommand};
 
@@ -34,6 +36,9 @@ pub enum VehicleCommand {
 
     /// Set scheduled charging.
     SetScheduledCharging(SetScheduledCharging),
+
+    /// Set scheduled departure.
+    SetScheduledDeparture(SetScheduledDeparture),
 }
 
 #[derive(Debug, Args)]
@@ -74,11 +79,11 @@ impl VehicleArgs {
             VehicleCommand::ChargeMaxRange => {
                 print_json(api.charge_max_range(&self.id).await);
             }
-            VehicleCommand::SetScheduledCharging(scheduled_charging) => {
-                print_json(
-                    api.set_scheduled_charging(&self.id, &scheduled_charging)
-                        .await,
-                );
+            VehicleCommand::SetScheduledCharging(charging) => {
+                print_json(api.set_scheduled_charging(&self.id, &charging).await);
+            }
+            VehicleCommand::SetScheduledDeparture(departure) => {
+                print_json(api.set_scheduled_departure(&self.id, &departure).await);
             }
         }
         Ok(())
