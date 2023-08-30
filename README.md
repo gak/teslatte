@@ -3,9 +3,11 @@
 > #### ⚠️ Alpha Warning! ⚠️
 > This Rust crate is still in alpha stage. It is something I quickly put together if anyone needed it. I'm aiming to work on it as I need more features.
 
-A Tesla API using the `owner-api.teslamotors.com` endpoint as well as "interactive" OAuth.
+Teslatte is both a CLI and a Rust crate for interacting with the Tesla API.
 
-Currently, it only supports some the `/api/1/vehicles` endpoint, but might be expanded in the future.
+A Tesla API using the `owner-api.teslamotors.com` endpoint as well as parts of the OAuth flow.
+
+Currently, it only supports some the API.
 
 It is fairly trivial to add in new endpoints if you feel like creating a PR. Please let me know if your PR is a massive change before spending a lot of time on it.
 
@@ -48,13 +50,20 @@ Specific Vehicle
 Usage: teslatte api vehicle <ID> <COMMAND>
 
 Commands:
-  data               Get vehicle data
-  charge-state       Get charge state
-  set-charge-limit   Set charge limit
-  set-charging-amps  Set charge amps
-  charge-start       Start charging
-  charge-stop        Stop charging
-  help               Print this message or the help of the given subcommand(s)
+  vehicle-data             Get vehicle data
+  charge-port-door-open    Open the charge port door or unlocks the cable
+  charge-port-door-close   For vehicles with a motorized charge port, this closes it
+  set-charge-limit         Set charge limit
+  set-charging-amps        Set charge amps
+  charge-standard          Set the charge limit to the standard %
+  charge-max-range         Set the charge limit to the maximum %
+  charge-start             Start charging
+  charge-stop              Stop charging
+  set-scheduled-charging   Set scheduled charging
+  set-scheduled-departure  Set scheduled departure
+  honk-horn                Honk!
+  flash-lights             Flash the lights
+  help                     Print this message or the help of the given subcommand(s)
 
 Arguments:
   <ID>
@@ -62,12 +71,12 @@ Arguments:
 Options:
   -h, --help  Print help
   
-$ teslatte api vehicle 1234567890 data
+$ teslatte api vehicle 1234567890 vehicle_data
 { ... }
 
 ```
 
-## Example
+## Crate example
 
 A basic example: [examples/basic.rs](examples/basic.rs)
 
