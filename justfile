@@ -12,12 +12,14 @@ token_tests:
     cargo run -- api energy-sites
 
 publish version:
-  # BSD sed
-  sed -i '' "s/^version = \".*\"$/version = \"{{version}}\"/" Cargo.toml
+    git diff-index --quiet HEAD
 
-  git add Cargo.toml
-  git commit -m "chore: v{{version}}"
-  git tag "v{{version}}"
-  git push origin "v{{version}}"
+    # BSD sed
+    sed -i '' "s/^version = \".*\"$/version = \"{{version}}\"/" Cargo.toml
 
-  cargo publish
+    git add Cargo.toml
+    git commit -m "chore: v{{version}}"
+    git tag "v{{version}}"
+    git push origin "v{{version}}"
+
+    cargo publish
