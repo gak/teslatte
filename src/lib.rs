@@ -35,9 +35,18 @@ pub struct VehicleId(u64);
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExternalVehicleId(u64);
 
-pub enum MethodWithPayload {
-    GET,
-    POST(String),
+pub enum RequestData<'a> {
+    GET { url: &'a str },
+    POST { url: &'a str, payload: &'a str },
+}
+
+impl Display for RequestData<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RequestData::GET { url } => write!(f, "GET {}", url),
+            RequestData::POST { url, payload } => write!(f, "POST {} {}", url, payload),
+        }
+    }
 }
 
 pub struct Api {
@@ -66,15 +75,8 @@ impl Api {
     {
         let request_context = || format!("GET {url}");
 
-        let response = self.request(MethodWithPayload::GET, url).await?;
+        let body = self.request(RequestData::GET { url }).await?;
 
-        let body = response
-            .text()
-            .await
-            .map_err(|source| TeslatteError::FetchError {
-                source,
-                request: request_context(),
-            })?;
         trace!(?body);
 
         let data = Self::parse_json::<D, _>(&body, request_context)?;
@@ -88,22 +90,13 @@ impl Api {
     where
         S: Serialize + Debug,
     {
-        trace!("Fetching");
-
         let request_context = || format!("POST {url}");
 
         let payload =
-            serde_json::to_string(&body).expect("Should not fail creating the request struct.");
+            &serde_json::to_string(&body).expect("Should not fail creating the request struct.");
 
-        let response = self.request(MethodWithPayload::POST(payload), url).await?;
+        let body = self.request(RequestData::POST { url, payload }).await?;
 
-        let body = response
-            .text()
-            .await
-            .map_err(|source| TeslatteError::FetchError {
-                source,
-                request: request_context(),
-            })?;
         let data = Self::parse_json::<PostResponse, _>(&body, request_context)?;
         trace!(?data);
 
@@ -119,18 +112,16 @@ impl Api {
         }
     }
 
-    async fn request(
-        &self,
-        method: MethodWithPayload,
-        url: &str,
-    ) -> Result<reqwest::Response, TeslatteError> {
-        let request_builder = match &method {
-            MethodWithPayload::GET => self.client.get(url),
-            MethodWithPayload::POST(payload) => self
+    async fn request(&self, request_data: RequestData<'_>) -> Result<String, TeslatteError> {
+        trace!("{request_data}");
+
+        let request_builder = match request_data {
+            RequestData::GET { url } => self.client.get(url),
+            RequestData::POST { url, payload } => self
                 .client
                 .post(url)
                 .header("Content-Type", "application/json")
-                .body(payload.clone()),
+                .body(payload.to_string()),
         };
 
         request_builder
@@ -140,10 +131,13 @@ impl Api {
             .await
             .map_err(|source| TeslatteError::FetchError {
                 source,
-                request: match method {
-                    MethodWithPayload::GET => format!("GET {url}"),
-                    MethodWithPayload::POST(payload) => format!("POST {url} {payload}"),
-                },
+                request: format!("{request_data}"),
+            })?
+            .text()
+            .await
+            .map_err(|source| TeslatteError::FetchError {
+                source,
+                request: format!("{request_data}"),
             })
     }
 
