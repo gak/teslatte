@@ -9,8 +9,15 @@ use serde::{Deserialize, Serialize};
 impl Api {
     get!(vehicles, Vec<Vehicle>, "/vehicles");
     get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
+    
+    // Charging
+    post_arg_empty!(charge_port_door_open, "/vehicles/{}/command/charge_port_door_open", VehicleId);
+    post_arg_empty!(charge_port_door_close, "/vehicles/{}/command/charge_port_door_close", VehicleId);
     post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", VehicleId);
     post_arg!(set_charging_amps, SetChargingAmps, "/vehicles/{}/command/set_charging_amps", VehicleId);
+    // TODO: post_arg!(set_charging_scheduled_charging, SetChargingAmps, "/vehicles/{}/command/set_scheduled_charging", VehicleId);
+    post_arg_empty!(charge_standard, "/vehicles/{}/command/charge_standard", VehicleId);
+    post_arg_empty!(charge_max_range, "/vehicles/{}/command/charge_max_range", VehicleId);
     post_arg_empty!(charge_start, "/vehicles/{}/command/charge_start", VehicleId);
     post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", VehicleId);
 }

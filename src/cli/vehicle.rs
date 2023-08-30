@@ -6,16 +6,25 @@ use clap::{Args, Subcommand};
 #[derive(Debug, Subcommand)]
 pub enum VehicleCommand {
     /// Get vehicle data.
-    Data,
+    VehicleData,
 
-    /// Get charge state.
-    ChargeState,
+    /// Open the charge port door or unlocks the cable.
+    ChargePortDoorOpen,
+
+    /// For vehicles with a motorized charge port, this closes it.
+    ChargePortDoorClose,
 
     /// Set charge limit.
     SetChargeLimit { percent: u8 },
 
     /// Set charge amps.
     SetChargingAmps { charging_amps: i64 },
+
+    /// Set the charge limit to the standard %.
+    ChargeStandard,
+
+    /// Set the charge limit to the maximum %.
+    ChargeMaxRange,
 
     /// Start charging.
     ChargeStart,
@@ -35,11 +44,8 @@ pub struct VehicleArgs {
 impl VehicleArgs {
     pub async fn run(self, api: &Api) -> miette::Result<()> {
         match self.command {
-            VehicleCommand::Data => {
+            VehicleCommand::VehicleData => {
                 print_json(api.vehicle_data(&self.id).await);
-            }
-            VehicleCommand::ChargeState => {
-                print_json(api.charge_state(&self.id).await);
             }
             VehicleCommand::SetChargeLimit { percent } => {
                 print_json(
@@ -58,6 +64,18 @@ impl VehicleArgs {
             }
             VehicleCommand::ChargeStop => {
                 print_json(api.charge_stop(&self.id).await);
+            }
+            VehicleCommand::ChargePortDoorOpen => {
+                print_json(api.charge_port_door_open(&self.id).await);
+            }
+            VehicleCommand::ChargePortDoorClose => {
+                print_json(api.charge_port_door_close(&self.id).await);
+            }
+            VehicleCommand::ChargeStandard => {
+                print_json(api.charge_standard(&self.id).await);
+            }
+            VehicleCommand::ChargeMaxRange => {
+                print_json(api.charge_max_range(&self.id).await);
             }
         }
         Ok(())

@@ -21,9 +21,6 @@ async fn main() {
     if !vehicles.is_empty() {
         let vehicle_data = api.vehicle_data(&vehicles[0].id).await.unwrap();
         dbg!(vehicle_data);
-
-        let charge_state = api.charge_state(&vehicles[0].id).await.unwrap();
-        dbg!(&charge_state);
     } else {
         println!("No vehicles found!");
     }
