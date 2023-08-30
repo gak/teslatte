@@ -321,6 +321,7 @@ pub struct SetChargeLimit {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::RequestData;
 
     #[test]
     fn json() {
@@ -386,6 +387,10 @@ mod tests {
       }
     }
     "#;
-        Api::parse_json::<ChargeState, _>(s, || "req".to_string()).unwrap();
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/charge_state",
+        };
+        Api::parse_json::<ChargeState>(&request_data, s.to_string()).unwrap();
     }
 }

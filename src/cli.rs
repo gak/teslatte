@@ -3,10 +3,10 @@ pub mod powerwall;
 pub mod vehicle;
 
 use crate::error::TeslatteError;
-use crate::Data;
+use crate::ResponseData;
 use std::process::exit;
 
-pub fn print_json<T>(result: Result<Data<T>, TeslatteError>) {
+pub fn print_json<T>(result: Result<ResponseData<T>, TeslatteError>) {
     match result {
         Ok(data) => print_json_data(data),
         Err(TeslatteError::ServerError { ref body, .. }) if body.is_some() => {
@@ -18,7 +18,7 @@ pub fn print_json<T>(result: Result<Data<T>, TeslatteError>) {
         }
     }
 }
-pub fn print_json_data<T>(data: Data<T>) {
+pub fn print_json_data<T>(data: ResponseData<T>) {
     // TODO: pretty print cli option
     print_json_str(data.body());
 }

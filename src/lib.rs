@@ -69,62 +69,57 @@ impl Api {
     }
 
     #[instrument(skip(self))]
-    async fn get<D>(&self, url: &str) -> Result<Data<D>, TeslatteError>
+    async fn get<D>(&self, url: &str) -> Result<ResponseData<D>, TeslatteError>
     where
         D: for<'de> Deserialize<'de> + Debug,
     {
-        let request_context = || format!("GET {url}");
-
-        let body = self.request(RequestData::GET { url }).await?;
-
-        trace!(?body);
-
-        let data = Self::parse_json::<D, _>(&body, request_context)?;
-        trace!(?data);
-
-        Ok(Data { data, body })
+        self.request(&RequestData::GET { url }).await
     }
 
     #[instrument(skip(self))]
-    async fn post<S>(&self, url: &str, body: S) -> Result<Data<PostResponse>, TeslatteError>
+    async fn post<S>(&self, url: &str, body: S) -> Result<ResponseData<PostResponse>, TeslatteError>
     where
         S: Serialize + Debug,
     {
-        let request_context = || format!("POST {url}");
+        // let request_context = || format!("POST {url} {payload}");
 
         let payload =
             &serde_json::to_string(&body).expect("Should not fail creating the request struct.");
 
-        let body = self.request(RequestData::POST { url, payload }).await?;
+        let request_data = RequestData::POST { url, payload };
+        let data = self.request::<PostResponse>(&request_data).await?;
 
-        let data = Self::parse_json::<PostResponse, _>(&body, request_context)?;
-        trace!(?data);
-
-        if data.result {
-            Ok(Data { data, body })
+        if data.data.result {
+            Ok(data)
         } else {
             Err(TeslatteError::ServerError {
-                request: request_context(),
-                msg: data.reason,
+                request: format!("{request_data}"),
+                msg: data.data.reason,
                 description: None,
-                body: Some(body),
+                body: Some(data.body),
             })
         }
     }
 
-    async fn request(&self, request_data: RequestData<'_>) -> Result<String, TeslatteError> {
+    async fn request<T>(
+        &self,
+        request_data: &RequestData<'_>,
+    ) -> Result<ResponseData<T>, TeslatteError>
+    where
+        T: for<'de> Deserialize<'de> + Debug,
+    {
         trace!("{request_data}");
 
         let request_builder = match request_data {
-            RequestData::GET { url } => self.client.get(url),
+            RequestData::GET { url } => self.client.get(*url),
             RequestData::POST { url, payload } => self
                 .client
-                .post(url)
+                .post(*url)
                 .header("Content-Type", "application/json")
                 .body(payload.to_string()),
         };
 
-        request_builder
+        let response_body = request_builder
             .header("Accept", "application/json")
             .header("Authorization", format!("Bearer {}", self.access_token.0))
             .send()
@@ -138,31 +133,36 @@ impl Api {
             .map_err(|source| TeslatteError::FetchError {
                 source,
                 request: format!("{request_data}"),
-            })
+            })?;
+
+        Self::parse_json(request_data, response_body)
     }
 
-    // The `request` argument is for additional context in the error.
-    fn parse_json<T, F>(body: &str, request: F) -> Result<T, TeslatteError>
+    fn parse_json<T>(
+        request_data: &RequestData,
+        response_body: String,
+    ) -> Result<ResponseData<T>, TeslatteError>
     where
         T: for<'de> Deserialize<'de> + Debug,
-        F: FnOnce() -> String + Copy,
     {
-        trace!("{}", &body);
-        let r: Response<T> = serde_json::from_str::<ResponseDeserializer<T>>(body)
+        let response: Response<T> = serde_json::from_str::<ResponseDeserializer<T>>(&response_body)
             .map_err(|source| TeslatteError::DecodeJsonError {
                 source,
-                request: request(),
-                body: body.to_string(),
+                request: format!("{request_data}"),
+                body: response_body.to_string(),
             })?
             .into();
 
-        match r {
-            Response::Response(r) => Ok(r),
+        match response {
+            Response::Response(data) => Ok(ResponseData {
+                data,
+                body: response_body,
+            }),
             Response::Error(e) => Err(TeslatteError::ServerError {
-                request: request(),
+                request: format!("{request_data}"),
                 msg: e.error,
                 description: e.error_description,
-                body: Some(body.to_owned()),
+                body: Some(response_body.to_owned()),
             }),
         }
     }
@@ -212,12 +212,12 @@ struct Empty {}
 ///
 /// This struct will automatically deref to the data type for better ergonomics.
 #[derive(Debug)]
-pub struct Data<T> {
+pub struct ResponseData<T> {
     data: T,
     body: String,
 }
 
-impl<T> Data<T> {
+impl<T> ResponseData<T> {
     pub fn data(&self) -> &T {
         &self.data
     }
@@ -227,7 +227,7 @@ impl<T> Data<T> {
     }
 }
 
-impl<T> std::ops::Deref for Data<T> {
+impl<T> std::ops::Deref for ResponseData<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -240,7 +240,7 @@ macro_rules! get {
     ($name:ident, $return_type:ty, $url:expr) => {
         pub async fn $name(
             &self,
-        ) -> Result<crate::Data<$return_type>, crate::error::TeslatteError> {
+        ) -> Result<crate::ResponseData<$return_type>, crate::error::TeslatteError> {
             let url = format!("{}{}", crate::API_URL, $url);
             self.get(&url).await
         }
@@ -256,7 +256,7 @@ macro_rules! get_arg {
         pub async fn $name(
             &self,
             arg: &$arg_type,
-        ) -> miette::Result<crate::Data<$return_type>, crate::error::TeslatteError> {
+        ) -> miette::Result<crate::ResponseData<$return_type>, crate::error::TeslatteError> {
             let url = format!($url, arg);
             let url = format!("{}{}", crate::API_URL, url);
             self.get(&url).await
@@ -271,7 +271,7 @@ macro_rules! get_args {
         pub async fn $name(
             &self,
             values: &$args,
-        ) -> miette::Result<crate::Data<$return_type>, crate::error::TeslatteError> {
+        ) -> miette::Result<crate::ResponseData<$return_type>, crate::error::TeslatteError> {
             let url = values.format($url);
             let url = format!("{}{}", crate::API_URL, url);
             self.get(&url).await
@@ -287,7 +287,7 @@ macro_rules! post_arg {
             &self,
             arg: &$arg_type,
             data: &$request_type,
-        ) -> miette::Result<crate::Data<crate::PostResponse>, crate::error::TeslatteError> {
+        ) -> miette::Result<crate::ResponseData<crate::PostResponse>, crate::error::TeslatteError> {
             let url = format!($url, arg);
             let url = format!("{}{}", crate::API_URL, url);
             self.post(&url, data).await
@@ -302,7 +302,7 @@ macro_rules! post_arg_empty {
         pub async fn $name(
             &self,
             arg: &$arg_type,
-        ) -> miette::Result<crate::Data<crate::PostResponse>, crate::error::TeslatteError> {
+        ) -> miette::Result<crate::ResponseData<crate::PostResponse>, crate::error::TeslatteError> {
             let url = format!($url, arg);
             let url = format!("{}{}", crate::API_URL, url);
             self.post(&url, &Empty {}).await
@@ -338,7 +338,13 @@ mod tests {
             "response": null,
             "error":{"error": "timeout","error_description": "s"}
         }"#;
-        let e = Api::parse_json::<ChargeState, _>(s, || "req".to_string());
+
+        let request_data = RequestData::POST {
+            url: "https://example.com",
+            payload: "doesn't matter",
+        };
+
+        let e = Api::parse_json::<ChargeState>(&request_data, s.to_string());
         if let Err(e) = e {
             if let TeslatteError::ServerError {
                 msg, description, ..
