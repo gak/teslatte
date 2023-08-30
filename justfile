@@ -10,3 +10,13 @@ token_tests:
     cargo run -- api vehicles
     cargo run --no-default-features --features cli -- api vehicles
     cargo run -- api energy-sites
+
+publish version:
+  sed -i "s/^version = \".*\"$/version = \"{{version}}\"/" Cargo.toml
+
+  git add Cargo.toml
+  git commit -m "chore: v{{version}}"
+  git tag "v{{version}}"
+  git push origin "v{{version}}"
+
+  cargo publish
