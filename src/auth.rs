@@ -17,19 +17,15 @@ pub struct AccessToken(pub String);
 #[derive(Debug, Clone, Serialize, Deserialize, FromStr, Display)]
 pub struct RefreshToken(pub String);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Credentials {
-    pub access_token: AccessToken,
-    pub refresh_token: Option<RefreshToken>,
-}
-
 struct Callback {
     code: String,
     state: String,
 }
 
 impl Api {
-    /// Currently the only way to "authenticate" to an access token for this library.
+    /// Show a URL for the user to click on to log into tesla.com, the ask them to paste the
+    /// URL they end up on, which is a 404 page. The URL contains OAuth information needed to
+    /// complete authentication for an access key.
     pub async fn from_interactive_url() -> Result<Api, TeslatteError> {
         let login_form = Self::get_login_url_for_user().await;
         println!("{}", "-".repeat(80));
@@ -44,10 +40,29 @@ page, where the URL will start with https://auth.tesla.com/void/callback?code=..
         let callback_url = ask_input("Enter the whole URL of the 404 page: ");
         println!(); // Newline to make the next output more separated and clear.
 
-        let callback = Self::extract_callback_from_url(&callback_url)?;
+        Api::from_callback_url(&login_form, &callback_url).await
+    }
+
+    /// Generate a [LoginForm] containing a URL the user should visit.
+    ///
+    /// See [Api::from_callback_url()] for the next step.
+    pub async fn get_login_url_for_user() -> LoginForm {
+        let code = Code::new();
+        let state = random_string(8);
+        let url = Self::login_url(&code, &state);
+        LoginForm { url, code, state }
+    }
+
+    /// Parse a callback URL that the user was redirected to after logging in via
+    /// [Api::from_interactive_url()].
+    pub async fn from_callback_url(
+        login_form: &LoginForm,
+        callback_url: &str,
+    ) -> Result<Api, TeslatteError> {
+        let callback = Self::extract_callback_from_url(callback_url)?;
         if callback.state != login_form.state {
             return Err(TeslatteError::StateMismatch {
-                request: login_form.state,
+                request: login_form.state.clone(),
                 callback: callback.state,
             });
         }
@@ -64,24 +79,6 @@ page, where the URL will start with https://auth.tesla.com/void/callback?code=..
             response.access_token,
             Some(response.refresh_token),
         ))
-    }
-
-    pub fn from_credentials(credentials: Credentials) -> Api {
-        Api::new(credentials.access_token, credentials.refresh_token)
-    }
-
-    pub fn credentials(&self) -> Credentials {
-        Credentials {
-            access_token: self.access_token.clone(),
-            refresh_token: self.refresh_token.clone(),
-        }
-    }
-
-    pub async fn get_login_url_for_user() -> LoginForm {
-        let code = Code::new();
-        let state = random_string(8);
-        let url = Self::login_url(&code, &state);
-        LoginForm { url, code, state }
     }
 
     async fn exchange_auth_for_bearer(
@@ -214,9 +211,9 @@ pub struct RefreshTokenResponse {
 #[derive(Debug, Default)]
 pub struct LoginForm {
     #[allow(dead_code)]
-    url: String,
-    code: Code,
-    state: String,
+    pub url: String,
+    pub code: Code,
+    pub state: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -276,7 +273,7 @@ fn random_string(len: usize) -> String {
     s
 }
 
-fn ask_input(prompt: &str) -> String {
+pub fn ask_input(prompt: &str) -> String {
     print!("{}", prompt);
     let mut s = String::new();
     stdout()
