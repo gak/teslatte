@@ -9,7 +9,11 @@ use serde::{Deserialize, Serialize};
 impl Api {
     get!(vehicles, Vec<Vehicle>, "/vehicles");
     get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
-    
+
+    // Alerts
+    post_arg_empty!(honk_horn, "/vehicles/{}/command/honk_horn", VehicleId);
+    post_arg_empty!(flash_lights, "/vehicles/{}/command/flash_lights", VehicleId);
+
     // Charging
     post_arg_empty!(charge_port_door_open, "/vehicles/{}/command/charge_port_door_open", VehicleId);
     post_arg_empty!(charge_port_door_close, "/vehicles/{}/command/charge_port_door_close", VehicleId);

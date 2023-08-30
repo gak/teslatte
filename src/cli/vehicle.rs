@@ -39,6 +39,12 @@ pub enum VehicleCommand {
 
     /// Set scheduled departure.
     SetScheduledDeparture(SetScheduledDeparture),
+
+    /// Honk!
+    HonkHorn,
+
+    /// Flash the lights.
+    FlashLights,
 }
 
 #[derive(Debug, Args)]
@@ -84,6 +90,12 @@ impl VehicleArgs {
             }
             VehicleCommand::SetScheduledDeparture(departure) => {
                 print_json(api.set_scheduled_departure(&self.id, &departure).await);
+            }
+            VehicleCommand::HonkHorn => {
+                print_json(api.honk_horn(&self.id).await);
+            }
+            VehicleCommand::FlashLights => {
+                print_json(api.flash_lights(&self.id).await);
             }
         }
         Ok(())
