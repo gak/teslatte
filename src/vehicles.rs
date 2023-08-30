@@ -314,13 +314,15 @@ pub struct Vehicle {
 }
 
 #[derive(Debug, Serialize)]
+#[cfg_attr(feature = "cli", derive(clap::Args))]
 pub struct SetChargingAmps {
     pub charging_amps: i64,
 }
 
 #[derive(Debug, Serialize)]
+#[cfg_attr(feature = "cli", derive(clap::Args))]
 pub struct SetChargeLimit {
-    // pub percent: Percentage,
+    // TODO: percent: Percentage,
     pub percent: u8,
 }
 

@@ -15,10 +15,10 @@ pub enum VehicleCommand {
     ChargePortDoorClose,
 
     /// Set charge limit.
-    SetChargeLimit { percent: u8 },
+    SetChargeLimit(SetChargeLimit),
 
     /// Set charge amps.
-    SetChargingAmps { charging_amps: i64 },
+    SetChargingAmps(SetChargingAmps),
 
     /// Set the charge limit to the standard %.
     ChargeStandard,
@@ -47,17 +47,11 @@ impl VehicleArgs {
             VehicleCommand::VehicleData => {
                 print_json(api.vehicle_data(&self.id).await);
             }
-            VehicleCommand::SetChargeLimit { percent } => {
-                print_json(
-                    api.set_charge_limit(&self.id, &SetChargeLimit { percent })
-                        .await,
-                );
+            VehicleCommand::SetChargeLimit(limit) => {
+                print_json(api.set_charge_limit(&self.id, &limit).await);
             }
-            VehicleCommand::SetChargingAmps { charging_amps } => {
-                print_json(
-                    api.set_charging_amps(&self.id, &SetChargingAmps { charging_amps })
-                        .await,
-                );
+            VehicleCommand::SetChargingAmps(charging_amps) => {
+                print_json(api.set_charging_amps(&self.id, &charging_amps).await);
             }
             VehicleCommand::ChargeStart => {
                 print_json(api.charge_start(&self.id).await);
