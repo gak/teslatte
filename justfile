@@ -9,7 +9,7 @@ no_token_test:
 token_tests:
     cargo run -- api vehicles
     cargo run --no-default-features --features cli -- api vehicles
-    cargo run -- api energy-sites
+    cargo run -- api products
 
 publish version:
     git diff-index --quiet HEAD

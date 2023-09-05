@@ -2,15 +2,16 @@ use crate::error::TeslatteError;
 use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
 use crate::{get, Api};
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[rustfmt::skip]
 impl Api {
-    get!(energy_sites, Vec<EnergySite>, "/products");
+    get!(products, Vec<Product>, "/products");
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Display)]
 pub struct EnergySiteId(pub u64);
 
 impl FromStr for EnergySiteId {
@@ -28,7 +29,7 @@ pub struct GatewayId(String);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum EnergySite {
+pub enum Product {
     Vehicle(Box<VehicleData>),
     Solar(Box<SolarData>),
     Powerwall(Box<PowerwallData>),
@@ -83,7 +84,7 @@ pub struct Components {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
+    use crate::energy_sites::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
     use crate::Values;
     use chrono::DateTime;
 
@@ -117,7 +118,7 @@ mod tests {
         }
         "#;
 
-        if let EnergySite::Powerwall(data) = serde_json::from_str(json).unwrap() {
+        if let Product::Powerwall(data) = serde_json::from_str(json).unwrap() {
             assert_eq!(data.battery_type, "ac_powerwall");
             assert!(data.backup_capable);
             assert_eq!(data.battery_power, -280);
@@ -208,8 +209,8 @@ mod tests {
             "command_signing": "allowed"
           }
         "#;
-        let energy_site: EnergySite = serde_json::from_str(json).unwrap();
-        if let EnergySite::Vehicle(v) = energy_site {
+        let energy_site: Product = serde_json::from_str(json).unwrap();
+        if let Product::Vehicle(v) = energy_site {
             assert_eq!(v.id.0, 1111193485934);
             assert_eq!(v.user_id, 2222291283912);
             assert_eq!(v.vehicle_id.0, 333331238921);

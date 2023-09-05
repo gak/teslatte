@@ -8,10 +8,10 @@ use std::fmt::{Debug, Display};
 use tracing::debug;
 
 pub mod auth;
-pub mod calendar_history;
-pub mod energy;
+pub mod energy_sites;
 pub mod error;
 pub mod powerwall;
+pub mod products;
 pub mod vehicles;
 
 #[cfg(feature = "cli")]

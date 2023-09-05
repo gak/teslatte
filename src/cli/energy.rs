@@ -1,6 +1,6 @@
-use crate::calendar_history::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
 use crate::cli::print_json;
-use crate::energy::EnergySiteId;
+use crate::energy_sites::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
+use crate::products::EnergySiteId;
 use crate::Api;
 use chrono::DateTime;
 use clap::{Args, Subcommand};
@@ -8,6 +8,9 @@ use miette::{IntoDiagnostic, WrapErr};
 
 #[derive(Debug, Subcommand)]
 pub enum EnergySiteCommand {
+    SiteStatus,
+    LiveStatus,
+    SiteInfo,
     CalendarHistory(CalendarHistoryArgs),
 }
 
@@ -22,6 +25,15 @@ pub struct EnergySiteArgs {
 impl EnergySiteArgs {
     pub async fn run(&self, api: &Api) -> miette::Result<()> {
         match &self.command {
+            EnergySiteCommand::SiteStatus => {
+                print_json(api.energy_sites_site_status(&self.id).await);
+            }
+            EnergySiteCommand::LiveStatus => {
+                print_json(api.energy_sites_live_status(&self.id).await);
+            }
+            EnergySiteCommand::SiteInfo => {
+                print_json(api.energy_sites_site_info(&self.id).await);
+            }
             EnergySiteCommand::CalendarHistory(args) => {
                 let start_date = args
                     .start

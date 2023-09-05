@@ -1,5 +1,5 @@
-use crate::calendar_history::{HistoryKind, HistoryPeriod};
-use crate::energy::GatewayId;
+use crate::energy_sites::{HistoryKind, HistoryPeriod};
+use crate::products::GatewayId;
 use crate::{get_arg, get_args, join_query_pairs, rfc3339, Api, Values};
 use chrono::{DateTime, FixedOffset};
 use derive_more::{Display, FromStr};

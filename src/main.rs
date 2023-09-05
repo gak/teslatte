@@ -59,7 +59,7 @@ enum ApiCommand {
     Vehicle(VehicleArgs),
 
     /// List of energy sites.
-    EnergySites,
+    Products,
 
     /// Specific energy site.
     EnergySite(EnergySiteArgs),
@@ -111,8 +111,8 @@ async fn main() -> miette::Result<()> {
                 ApiCommand::Vehicle(v) => {
                     v.run(&api).await?;
                 }
-                ApiCommand::EnergySites => {
-                    print_json(api.energy_sites().await);
+                ApiCommand::Products => {
+                    print_json(api.products().await);
                 }
                 ApiCommand::EnergySite(e) => {
                     e.run(&api).await?;
