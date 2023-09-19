@@ -38,6 +38,7 @@ pub struct VehicleData {
     /// gak: This was null for me, assuming String.
     pub color: Option<String>,
     pub access_type: String,
+    pub granular_access: Option<GranularAccess>,
     pub tokens: Vec<String>,
     pub state: String,
     pub in_service: bool,
@@ -48,6 +49,7 @@ pub struct VehicleData {
     pub backseat_token: Option<String>,
     /// gak: This was null for me, assuming String.
     pub backseat_token_updated_at: Option<String>,
+    pub ble_autopair_enrolled: Option<bool>,
 
     /// gak: Some of these have been null for me, so making them all Option.
     pub charge_state: Option<ChargeState>,
@@ -74,7 +76,7 @@ pub struct ChargeState {
     pub charge_limit_soc_std: i64,
     pub charge_miles_added_ideal: f64,
     pub charge_miles_added_rated: f64,
-    pub charge_port_cold_weather_mode: bool,
+    pub charge_port_cold_weather_mode: Option<bool>,
     pub charge_port_color: String,
     pub charge_port_door_open: bool,
     pub charge_port_latch: String,
@@ -121,12 +123,12 @@ pub struct ChargeState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClimateState {
     pub allow_cabin_overheat_protection: bool,
-    pub auto_seat_climate_left: bool,
-    pub auto_seat_climate_right: bool,
+    pub auto_seat_climate_left: Option<bool>,
+    pub auto_seat_climate_right: Option<bool>,
     pub battery_heater: bool,
     pub battery_heater_no_power: Option<bool>,
     pub cabin_overheat_protection: String,
-    pub cabin_overheat_protection_actively_cooling: bool,
+    pub cabin_overheat_protection_actively_cooling: Option<bool>,
     pub climate_keeper_mode: String,
     pub defrost_mode: i64,
     pub driver_temp_setting: f64,
@@ -187,8 +189,8 @@ pub struct GuiSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VehicleConfig {
-    pub aux_park_lamps: String,
-    pub badge_version: i64,
+    pub aux_park_lamps: Option<String>,
+    pub badge_version: Option<i64>,
     pub can_accept_navigation_requests: bool,
     pub can_actuate_trunks: bool,
     pub car_special_type: String,
@@ -201,17 +203,18 @@ pub struct VehicleConfig {
     pub efficiency_package: String,
     pub eu_vehicle: bool,
     pub exterior_color: String,
-    pub exterior_trim: String,
-    pub exterior_trim_override: String,
+    pub exterior_trim: Option<String>,
+    pub exterior_trim_override: Option<String>,
+    pub front_drive_unit: Option<String>,
     pub has_air_suspension: bool,
     pub has_ludicrous_mode: bool,
     pub has_seat_cooling: bool,
     pub headlamp_type: String,
     pub interior_trim_type: String,
-    pub key_version: i64,
+    pub key_version: Option<i64>,
     pub motorized_charge_port: bool,
-    pub paint_color_override: String,
-    pub performance_package: String,
+    pub paint_color_override: Option<String>,
+    pub performance_package: Option<String>,
     pub plg: bool,
     pub pws: bool,
     pub rear_drive_unit: String,
@@ -222,13 +225,13 @@ pub struct VehicleConfig {
     pub seat_type: Option<u32>,
     pub spoiler_type: String,
     pub sun_roof_installed: Option<u32>,
-    pub supports_qr_pairing: bool,
+    pub supports_qr_pairing: Option<bool>,
     pub third_row_seats: String,
     pub timestamp: i64,
     pub trim_badging: String,
     pub use_range_badging: bool,
     pub utc_offset: i64,
-    pub webcam_supported: bool,
+    pub webcam_supported: Option<bool>,
     pub wheel_type: String,
 }
 
@@ -248,6 +251,8 @@ pub struct VehicleState {
     pub feature_bitmask: String,
     pub fp_window: i64,
     pub ft: i64,
+    pub homelink_device_count: Option<i64>,
+    pub homelink_nearby: Option<bool>,
     pub is_user_present: bool,
     pub last_autopark_error: String,
     pub locked: bool,
@@ -264,24 +269,27 @@ pub struct VehicleState {
     pub rp_window: i64,
     pub rt: i64,
     pub santa_mode: i64,
-    pub sentry_mode: bool,
-    pub sentry_mode_available: bool,
-    pub service_mode: bool,
-    pub service_mode_plus: bool,
+    pub sentry_mode: Option<bool>,
+    pub sentry_mode_available: Option<bool>,
+    pub service_mode: Option<bool>,
+    pub service_mode_plus: Option<bool>,
     pub smart_summon_available: bool,
     pub software_update: SoftwareUpdate,
     pub speed_limit_mode: SpeedLimitMode,
     pub summon_standby_mode_enabled: bool,
+    pub sun_roof_percent_open: Option<i64>,
+    pub sun_roof_state: Option<String>,
     pub timestamp: i64,
-    pub tpms_pressure_fl: f64,
-    pub tpms_pressure_fr: f64,
-    pub tpms_pressure_rl: f64,
-    pub tpms_pressure_rr: f64,
+    pub tpms_pressure_fl: Option<f64>,
+    pub tpms_pressure_fr: Option<f64>,
+    pub tpms_pressure_rl: Option<f64>,
+    pub tpms_pressure_rr: Option<f64>,
     pub valet_mode: bool,
+    pub valet_pin_needed: Option<bool>,
     pub vehicle_name: String,
-    pub vehicle_self_test_progress: i64,
-    pub vehicle_self_test_requested: bool,
-    pub webcam_available: bool,
+    pub vehicle_self_test_progress: Option<i64>,
+    pub vehicle_self_test_requested: Option<bool>,
+    pub webcam_available: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -305,6 +313,11 @@ pub struct SpeedLimitMode {
     pub max_limit_mph: i64,
     pub min_limit_mph: f64,
     pub pin_code_set: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GranularAccess {
+    pub hide_private: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -384,7 +397,7 @@ mod tests {
     use crate::RequestData;
 
     #[test]
-    fn json() {
+    fn json_charge_state_1() {
         let s = r#"
     {
       "response": {
@@ -452,5 +465,536 @@ mod tests {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/charge_state",
         };
         Api::parse_json::<ChargeState>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_charge_state_2() {
+        let s = r#"
+    {
+      "response": {
+          "battery_heater_on":false,
+          "battery_level":80,
+          "battery_range":218.21,
+          "charge_amps":16,
+          "charge_current_request":16,
+          "charge_current_request_max":16,
+          "charge_enable_request":false,
+          "charge_energy_added":15.59,
+          "charge_limit_soc":80,
+          "charge_limit_soc_max":100,
+          "charge_limit_soc_min":50,
+          "charge_limit_soc_std":90,
+          "charge_miles_added_ideal":48.5,
+          "charge_miles_added_rated":60.5,
+          "charge_port_cold_weather_mode":null,
+          "charge_port_color":"Off",
+          "charge_port_door_open":true,
+          "charge_port_latch":"Engaged",
+          "charge_rate":0.0,
+          "charge_to_max_range":false,
+          "charger_actual_current":0,
+          "charger_phases":null,
+          "charger_pilot_current":16,
+          "charger_power":0,
+          "charger_voltage":0,
+          "charging_state":"Complete",
+          "conn_charge_cable":"IEC",
+          "est_battery_range":177.86,
+          "fast_charger_brand":"<invalid>",
+          "fast_charger_present":false,
+          "fast_charger_type":"<invalid>",
+          "ideal_battery_range":174.57,
+          "managed_charging_active":false,
+          "managed_charging_start_time":null,
+          "managed_charging_user_canceled":false,
+          "max_range_charge_counter":0,
+          "minutes_to_full_charge":0,
+          "not_enough_power_to_heat":false,
+          "off_peak_charging_enabled":true,
+          "off_peak_charging_times":"all_week",
+          "off_peak_hours_end_time":360,
+          "preconditioning_enabled":false,
+          "preconditioning_times":"all_week",
+          "scheduled_charging_mode":"DepartBy",
+          "scheduled_charging_pending":false,
+          "scheduled_charging_start_time":1695087005,
+          "scheduled_charging_start_time_app":0,
+          "scheduled_departure_time":1695186000,
+          "scheduled_departure_time_minutes":420,
+          "supercharger_session_trip_planner":false,
+          "time_to_full_charge":0.0,
+          "timestamp":1695129645307,
+          "trip_charging":false,
+          "usable_battery_level":80,
+          "user_charge_enable_request":null
+      }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/charge_state",
+        };
+        Api::parse_json::<ChargeState>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_climate_state() {
+        let s = r#"
+    {
+      "response": {
+          "allow_cabin_overheat_protection":false,
+          "battery_heater":false,
+          "battery_heater_no_power":false,
+          "cabin_overheat_protection":"On",
+          "climate_keeper_mode":"off",
+          "defrost_mode":0,
+          "driver_temp_setting":23.0,
+          "fan_status":0,
+          "hvac_auto_request":"On",
+          "inside_temp":23.9,
+          "is_auto_conditioning_on":false,
+          "is_climate_on":false,
+          "is_front_defroster_on":false,
+          "is_preconditioning":false,
+          "is_rear_defroster_on":false,
+          "left_temp_direction":-103,
+          "max_avail_temp":28.0,
+          "min_avail_temp":15.0,
+          "outside_temp":19.5,
+          "passenger_temp_setting":23.0,
+          "remote_heater_control_enabled":false,
+          "right_temp_direction":-103,
+          "seat_heater_left":0,
+          "seat_heater_rear_center":0,
+          "seat_heater_rear_left":0,
+          "seat_heater_rear_right":0,
+          "seat_heater_right":0,
+          "side_mirror_heaters":false,
+          "steering_wheel_heater":false,
+          "supports_fan_only_cabin_overheat_protection":false,
+          "timestamp":1695129645306,
+          "wiper_blade_heater":false
+      }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/climate_state",
+        };
+        Api::parse_json::<ClimateState>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_drive_state() {
+        let s = r#"
+    {
+      "response": {
+          "gps_as_of":1695129643,
+          "heading":107,
+          "latitude":47.004162,
+          "longitude":8.603523,
+          "native_latitude":47.004162,
+          "native_location_supported":1,
+          "native_longitude":8.603523,
+          "native_type":"wgs",
+          "power":0,
+          "shift_state":null,
+          "speed":null,
+          "timestamp":1695129645307
+      }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/drive_state",
+        };
+        Api::parse_json::<DriveState>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_gui_settings() {
+        let s = r#"
+    {
+      "response": {
+          "gui_24_hour_time":true,
+          "gui_charge_rate_units":"km/hr",
+          "gui_distance_units":"km/hr",
+          "gui_range_display":"Ideal",
+          "gui_temperature_units":"C",
+          "show_range_units":true,
+          "timestamp":1695129645307
+      }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/gui_settings",
+        };
+        Api::parse_json::<GuiSettings>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_vehicle_config() {
+        let s = r#"
+    {
+      "response": {
+          "can_accept_navigation_requests":true,
+          "can_actuate_trunks":true,
+          "car_special_type":"base",
+          "car_type":"models",
+          "charge_port_type":"EU",
+          "dashcam_clip_save_supported":false,
+          "default_charge_to_max":false,
+          "driver_assist":"MonoCam",
+          "ece_restrictions":true,
+          "efficiency_package":"Default",
+          "eu_vehicle":true,
+          "exterior_color":"MetallicBlack",
+          "front_drive_unit":"NoneOrSmall",
+          "has_air_suspension":true,
+          "has_ludicrous_mode":false,
+          "has_seat_cooling":false,
+          "headlamp_type":"Hid",
+          "interior_trim_type":"AllBlack",
+          "motorized_charge_port":true,
+          "plg":true,
+          "pws":false,
+          "rear_drive_unit":"Large",
+          "rear_seat_heaters":1,
+          "rear_seat_type":0,
+          "rhd":false,
+          "roof_color":"None",
+          "seat_type":1,
+          "spoiler_type":"Passive",
+          "sun_roof_installed":1,
+          "third_row_seats":"None",
+          "timestamp":1695129645329,
+          "trim_badging":"p85d",
+          "use_range_badging":false,
+          "utc_offset":7200,
+          "wheel_type":"Charcoal21"
+      }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/vehicle_config",
+        };
+        Api::parse_json::<VehicleConfig>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_vehicle_state() {
+        let s = r#"
+    {
+      "response": {
+          "api_version":36,
+          "autopark_state_v2":"standby",
+          "autopark_style":"dead_man",
+          "calendar_supported":true,
+          "car_version":"2022.8.10.16 7477b4ff8e78",
+          "center_display_state":0,
+          "dashcam_clip_save_available":false,
+          "dashcam_state":"<invalid>",
+          "df":0,
+          "dr":0,
+          "fd_window":0,
+          "feature_bitmask":"5,0",
+          "fp_window":0,
+          "ft":0,
+          "homelink_device_count":0,
+          "homelink_nearby":false,
+          "is_user_present":false,
+          "last_autopark_error":"no_error",
+          "locked":true,
+          "media_state":{"remote_control_enabled":true},
+          "notifications_supported":true,
+          "odometer":104374.713449,
+          "parsed_calendar_supported":true,
+          "pf":0,
+          "pr":0,
+          "rd_window":0,
+          "remote_start":false,
+          "remote_start_enabled":true,
+          "remote_start_supported":true,
+          "rp_window":0,
+          "rt":0,
+          "santa_mode":0,
+          "smart_summon_available":false,
+          "software_update":{
+            "download_perc":0,
+            "expected_duration_sec":2700,
+            "install_perc":1,
+            "status":"",
+            "version":"EU-2023.20-14615"
+          },
+          "speed_limit_mode":{
+            "active":false,
+            "current_limit_mph":90.0,
+            "max_limit_mph":90,
+            "min_limit_mph":50.0,
+            "pin_code_set":false
+          },
+          "summon_standby_mode_enabled":false,
+          "sun_roof_percent_open":0,
+          "sun_roof_state":"closed",
+          "timestamp":1695129645306,
+          "tpms_pressure_fl":null,
+          "tpms_pressure_fr":null,
+          "tpms_pressure_rl":null,
+          "tpms_pressure_rr":null,
+          "valet_mode":false,
+          "valet_pin_needed":true,
+          "vehicle_name":"HTLC"
+        }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/vehicle_state",
+        };
+        Api::parse_json::<VehicleState>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_vehicle_data() {
+        let s = r#"
+    {
+      "response": {
+        "id":1492931365719407,
+        "user_id":219663,
+        "vehicle_id":1328174702,
+        "vin":"5YJSA7H4XFF088491",
+        "color":null,
+        "access_type":"OWNER",
+        "granular_access":{"hide_private":false},
+        "tokens":["acadf06c646653b4","cc6b3e741b90d32d"],
+        "state":"online",
+        "in_service":false,
+        "id_s":"1492931365719407",
+        "calendar_enabled":true,
+        "api_version":36,
+        "backseat_token":null,
+        "backseat_token_updated_at":null,
+        "ble_autopair_enrolled":false,
+        "charge_state":{
+          "battery_heater_on":false,
+          "battery_level":80,
+          "battery_range":218.21,
+          "charge_amps":16,
+          "charge_current_request":16,
+          "charge_current_request_max":16,
+          "charge_enable_request":false,
+          "charge_energy_added":15.59,
+          "charge_limit_soc":80,
+          "charge_limit_soc_max":100,
+          "charge_limit_soc_min":50,
+          "charge_limit_soc_std":90,
+          "charge_miles_added_ideal":48.5,
+          "charge_miles_added_rated":60.5,
+          "charge_port_cold_weather_mode":null,
+          "charge_port_color":"Off",
+          "charge_port_door_open":true,
+          "charge_port_latch":"Engaged",
+          "charge_rate":0.0,
+          "charge_to_max_range":false,
+          "charger_actual_current":0,
+          "charger_phases":null,
+          "charger_pilot_current":16,
+          "charger_power":0,
+          "charger_voltage":0,
+          "charging_state":"Complete",
+          "conn_charge_cable":"IEC",
+          "est_battery_range":177.86,
+          "fast_charger_brand":"<invalid>",
+          "fast_charger_present":false,
+          "fast_charger_type":"<invalid>",
+          "ideal_battery_range":174.57,
+          "managed_charging_active":false,
+          "managed_charging_start_time":null,
+          "managed_charging_user_canceled":false,
+          "max_range_charge_counter":0,
+          "minutes_to_full_charge":0,
+          "not_enough_power_to_heat":false,
+          "off_peak_charging_enabled":true,
+          "off_peak_charging_times":"all_week",
+          "off_peak_hours_end_time":360,
+          "preconditioning_enabled":false,
+          "preconditioning_times":"all_week",
+          "scheduled_charging_mode":"DepartBy",
+          "scheduled_charging_pending":false,
+          "scheduled_charging_start_time":1695087005,
+          "scheduled_charging_start_time_app":0,
+          "scheduled_departure_time":1695186000,
+          "scheduled_departure_time_minutes":420,
+          "supercharger_session_trip_planner":false,
+          "time_to_full_charge":0.0,
+          "timestamp":1695129645307,
+          "trip_charging":false,
+          "usable_battery_level":80,
+          "user_charge_enable_request":null
+        },
+        "climate_state":{
+          "allow_cabin_overheat_protection":false,
+          "battery_heater":false,
+          "battery_heater_no_power":false,
+          "cabin_overheat_protection":"On",
+          "climate_keeper_mode":"off",
+          "defrost_mode":0,
+          "driver_temp_setting":23.0,
+          "fan_status":0,
+          "hvac_auto_request":"On",
+          "inside_temp":23.9,
+          "is_auto_conditioning_on":false,
+          "is_climate_on":false,
+          "is_front_defroster_on":false,
+          "is_preconditioning":false,
+          "is_rear_defroster_on":false,
+          "left_temp_direction":-103,
+          "max_avail_temp":28.0,
+          "min_avail_temp":15.0,
+          "outside_temp":19.5,
+          "passenger_temp_setting":23.0,
+          "remote_heater_control_enabled":false,
+          "right_temp_direction":-103,
+          "seat_heater_left":0,
+          "seat_heater_rear_center":0,
+          "seat_heater_rear_left":0,
+          "seat_heater_rear_right":0,
+          "seat_heater_right":0,
+          "side_mirror_heaters":false,
+          "steering_wheel_heater":false,
+          "supports_fan_only_cabin_overheat_protection":false,
+          "timestamp":1695129645306,
+          "wiper_blade_heater":false
+        },
+        "drive_state":{
+          "gps_as_of":1695129643,
+          "heading":107,
+          "latitude":47.004162,
+          "longitude":8.603523,
+          "native_latitude":47.004162,
+          "native_location_supported":1,
+          "native_longitude":8.603523,
+          "native_type":"wgs",
+          "power":0,
+          "shift_state":null,
+          "speed":null,
+          "timestamp":1695129645307
+        },
+        "gui_settings":{
+          "gui_24_hour_time":true,
+          "gui_charge_rate_units":"km/hr",
+          "gui_distance_units":"km/hr",
+          "gui_range_display":"Ideal",
+          "gui_temperature_units":"C",
+          "show_range_units":true,
+          "timestamp":1695129645307
+        },
+        "vehicle_config":{
+          "can_accept_navigation_requests":true,
+          "can_actuate_trunks":true,
+          "car_special_type":"base",
+          "car_type":"models",
+          "charge_port_type":"EU",
+          "dashcam_clip_save_supported":false,
+          "default_charge_to_max":false,
+          "driver_assist":"MonoCam",
+          "ece_restrictions":true,
+          "efficiency_package":"Default",
+          "eu_vehicle":true,
+          "exterior_color":"MetallicBlack",
+          "front_drive_unit":"NoneOrSmall",
+          "has_air_suspension":true,
+          "has_ludicrous_mode":false,
+          "has_seat_cooling":false,
+          "headlamp_type":"Hid",
+          "interior_trim_type":"AllBlack",
+          "motorized_charge_port":true,
+          "plg":true,
+          "pws":false,
+          "rear_drive_unit":"Large",
+          "rear_seat_heaters":1,
+          "rear_seat_type":0,
+          "rhd":false,
+          "roof_color":"None",
+          "seat_type":1,
+          "spoiler_type":"Passive",
+          "sun_roof_installed":1,
+          "third_row_seats":"None",
+          "timestamp":1695129645329,
+          "trim_badging":"p85d",
+          "use_range_badging":false,
+          "utc_offset":7200,
+          "wheel_type":"Charcoal21"
+        },
+        "vehicle_state":{
+          "api_version":36,
+          "autopark_state_v2":"standby",
+          "autopark_style":"dead_man",
+          "calendar_supported":true,
+          "car_version":"2022.8.10.16 7477b4ff8e78",
+          "center_display_state":0,
+          "dashcam_clip_save_available":false,
+          "dashcam_state":"<invalid>",
+          "df":0,
+          "dr":0,
+          "fd_window":0,
+          "feature_bitmask":"5,0",
+          "fp_window":0,
+          "ft":0,
+          "homelink_device_count":0,
+          "homelink_nearby":false,
+          "is_user_present":false,
+          "last_autopark_error":"no_error",
+          "locked":true,
+          "media_state":{"remote_control_enabled":true},
+          "notifications_supported":true,
+          "odometer":104374.713449,
+          "parsed_calendar_supported":true,
+          "pf":0,
+          "pr":0,
+          "rd_window":0,
+          "remote_start":false,
+          "remote_start_enabled":true,
+          "remote_start_supported":true,
+          "rp_window":0,
+          "rt":0,
+          "santa_mode":0,
+          "smart_summon_available":false,
+          "software_update":{
+            "download_perc":0,
+            "expected_duration_sec":2700,
+            "install_perc":1,
+            "status":"",
+            "version":"EU-2023.20-14615"
+          },
+          "speed_limit_mode":{
+            "active":false,
+            "current_limit_mph":90.0,
+            "max_limit_mph":90,
+            "min_limit_mph":50.0,
+            "pin_code_set":false
+          },
+          "summon_standby_mode_enabled":false,
+          "sun_roof_percent_open":0,
+          "sun_roof_state":"closed",
+          "timestamp":1695129645306,
+          "tpms_pressure_fl":null,
+          "tpms_pressure_fr":null,
+          "tpms_pressure_rl":null,
+          "tpms_pressure_rr":null,
+          "valet_mode":false,
+          "valet_pin_needed":true,
+          "vehicle_name":"HTLC"
+        }
+      }
+    }
+    "#;
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
+        };
+        Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
     }
 }
