@@ -1,5 +1,9 @@
 # Teslatte 🚗🔋☕
 
+<a href="https://crates.io/crates/teslatte">![Crates.io](https://img.shields.io/crates/v/teslatte?style=for-the-badge&color=c02020)</a>
+<a href="https://docs.rs/teslatte">![docs.rs](https://img.shields.io/docsrs/teslatte?style=for-the-badge)</a>
+<a href="https://github.com/gak/teslatte#license">![MIT or Apache-2.0](https://img.shields.io/crates/l/teslatte?style=for-the-badge)</a>
+
 > #### ⚠️ Alpha Warning! ⚠️
 > This Rust crate is still in alpha stage. It is something I quickly put together if anyone needed it. I'm aiming to work on it as I need more features.
 
