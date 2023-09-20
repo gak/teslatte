@@ -6,6 +6,8 @@
 
 > #### ⚠️ Alpha Warning! ⚠️
 > This Rust crate is still in alpha stage. It is something I quickly put together if anyone needed it. I'm aiming to work on it as I need more features.
+> 
+> `0.1.x` will have breaking API changes. Don't rely on this project for anything important yet.
 
 Teslatte is both a CLI and a Rust crate for interacting with the Tesla API.
 
