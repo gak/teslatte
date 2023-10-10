@@ -1,4 +1,4 @@
-# Teslatte 🚗🔋☕
+# Teslatte 🚗🔋☀️☕
 
 <a href="https://crates.io/crates/teslatte">![Crates.io](https://img.shields.io/crates/v/teslatte?style=for-the-badge&color=c02020)</a>
 <a href="https://docs.rs/teslatte">![docs.rs](https://img.shields.io/docsrs/teslatte?style=for-the-badge)</a>
