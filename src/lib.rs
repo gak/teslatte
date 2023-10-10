@@ -35,20 +35,24 @@ pub struct VehicleId(u64);
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExternalVehicleId(u64);
 
-pub enum RequestData<'a> {
-    GET { url: &'a str },
-    POST { url: &'a str, payload: &'a str },
+enum RequestData<'a> {
+    Get { url: &'a str },
+    Post { url: &'a str, payload: &'a str },
 }
 
 impl Display for RequestData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RequestData::GET { url } => write!(f, "GET {}", url),
-            RequestData::POST { url, payload } => write!(f, "POST {} {}", url, payload),
+            RequestData::Get { url } => write!(f, "GET {}", url),
+            RequestData::Post { url, payload } => write!(f, "POST {} {}", url, payload),
         }
     }
 }
 
+/// API client for the Tesla API.
+///
+/// Main entry point for the API. It contains the access token and refresh token, and can be used
+/// to make requests to the API.
 pub struct Api {
     pub access_token: AccessToken,
     pub refresh_token: Option<RefreshToken>,
@@ -71,7 +75,7 @@ impl Api {
     where
         D: for<'de> Deserialize<'de> + Debug,
     {
-        self.request(&RequestData::GET { url }).await
+        self.request(&RequestData::Get { url }).await
     }
 
     async fn post<S>(&self, url: &str, body: S) -> Result<ResponseData<PostResponse>, TeslatteError>
@@ -80,7 +84,7 @@ impl Api {
     {
         let payload =
             &serde_json::to_string(&body).expect("Should not fail creating the request struct.");
-        let request_data = RequestData::POST { url, payload };
+        let request_data = RequestData::Post { url, payload };
         let data = self.request::<PostResponse>(&request_data).await?;
 
         if !data.data.result {
@@ -105,8 +109,8 @@ impl Api {
         debug!("{request_data}");
 
         let request_builder = match request_data {
-            RequestData::GET { url } => self.client.get(*url),
-            RequestData::POST { url, payload } => self
+            RequestData::Get { url } => self.client.get(*url),
+            RequestData::Post { url, payload } => self
                 .client
                 .post(*url)
                 .header("Content-Type", "application/json")
@@ -188,12 +192,14 @@ impl<T> From<ResponseDeserializer<T>> for Response<T> {
     }
 }
 
+/// Standard response data from the API. Contains a reason string and a result bool.
 #[derive(Debug, Deserialize)]
 pub struct PostResponse {
     reason: String,
     result: bool,
 }
 
+/// Standard error response from the API.
 #[derive(Debug, Deserialize)]
 struct ResponseError {
     error: String,
@@ -203,10 +209,11 @@ struct ResponseError {
 #[derive(Debug, Serialize)]
 struct Empty {}
 
-/// Data and body from a request. The body can be used for debugging. The CLI can optionally
-/// print the raw JSON so the user can manipulate it.
+/// Data and body from a request. The body can be used for debugging.
 ///
-/// This struct will automatically deref to the data type for better ergonomics.
+/// The CLI can optionally print the raw JSON so the user can manipulate it.
+///
+/// This struct will automatically deref to the `data` type for better ergonomics.
 #[derive(Debug)]
 pub struct ResponseData<T> {
     data: T,
@@ -335,7 +342,7 @@ mod tests {
             "error":{"error": "timeout","error_description": "s"}
         }"#;
 
-        let request_data = RequestData::POST {
+        let request_data = RequestData::Post {
             url: "https://example.com",
             payload: "doesn't matter",
         };

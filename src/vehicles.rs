@@ -461,7 +461,7 @@ mod tests {
     }
     "#;
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/charge_state",
         };
         Api::parse_json::<ChargeState>(&request_data, s.to_string()).unwrap();
@@ -508,7 +508,7 @@ mod tests {
     }
     "#;
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/climate_state",
         };
         Api::parse_json::<ClimateState>(&request_data, s.to_string()).unwrap();
@@ -535,7 +535,7 @@ mod tests {
     }
     "#;
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/drive_state",
         };
         Api::parse_json::<DriveState>(&request_data, s.to_string()).unwrap();
@@ -557,7 +557,7 @@ mod tests {
     }
     "#;
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/gui_settings",
         };
         Api::parse_json::<GuiSettings>(&request_data, s.to_string()).unwrap();
@@ -607,7 +607,7 @@ mod tests {
     }
     "#;
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/vehicle_config",
         };
         Api::parse_json::<VehicleConfig>(&request_data, s.to_string()).unwrap();
@@ -682,7 +682,7 @@ mod tests {
     }
     "#;
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/vehicle_state",
         };
         Api::parse_json::<VehicleState>(&request_data, s.to_string()).unwrap();
@@ -692,7 +692,7 @@ mod tests {
     fn json_vehicle_data_htlc_2023_09_19() {
         let s = include_str!("../testdata/vehicle_data_HTLC_2023_09_19.json");
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
         Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
@@ -702,7 +702,7 @@ mod tests {
     fn json_vehicle_data_htlc_2023_10_09() {
         let s = include_str!("../testdata/vehicle_data_HTLC_2023_10_09.json");
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
         Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
@@ -712,7 +712,7 @@ mod tests {
     fn json_vehicle_data_bitcoin_lightning_2023_10_09() {
         let s = include_str!("../testdata/vehicle_data_BitcoinLightning_2023_10_09.json");
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
         Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
