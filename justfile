@@ -5,7 +5,7 @@ no_token_test:
     cargo clippy --all-targets --all-features -- -D warnings
     cargo test
 
-# These tests require an access token saved in a file called "cli.json"
+# Require an access token from "cli.json". Use `just auth` to generate.
 token_tests:
     cargo run -- api vehicles
     cargo run --no-default-features --features cli -- api vehicles
@@ -24,3 +24,6 @@ publish version:
     git push
 
     cargo publish
+
+auth:
+    cargo run -- auth --save
