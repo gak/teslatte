@@ -119,7 +119,7 @@ impl Api {
 
         let response_body = request_builder
             .header("Accept", "application/json")
-            .header("Authorization", format!("Bearer {}", self.access_token.0))
+            .header("Authorization", format!("Bearer {}", self.access_token.0.trim()))
             .send()
             .await
             .map_err(|source| TeslatteError::FetchError {

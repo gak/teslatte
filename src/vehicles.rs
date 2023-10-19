@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 impl Api {
     get!(vehicles, Vec<Vehicle>, "/vehicles");
     get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
+    post_arg_empty!(wake_up, "/vehicles/{}/command/wake_up", VehicleId);
 
     // Alerts
     post_arg_empty!(honk_horn, "/vehicles/{}/command/honk_horn", VehicleId);
@@ -25,6 +26,16 @@ impl Api {
     post_arg_empty!(charge_stop, "/vehicles/{}/command/charge_stop", VehicleId);
     post_arg!(set_scheduled_charging, SetScheduledCharging, "/vehicles/{}/command/set_scheduled_charging", VehicleId);
     post_arg!(set_scheduled_departure, SetScheduledDeparture, "/vehicles/{}/command/set_scheduled_departure", VehicleId);
+
+    // HVAC
+    post_arg_empty!(auto_conditioning_start, "/vehicles/{}/command/auto_conditioning_start", VehicleId);
+    post_arg_empty!(auto_conditioning_stop, "/vehicles/{}/command/auto_conditioning_stop", VehicleId);
+    post_arg!(set_temps, SetTemperatures, "/vehicles/{}/command/set_temps", VehicleId);
+
+    // Doors
+    post_arg_empty!(door_unlock, "/vehicles/{}/command/door_unlock", VehicleId);
+    post_arg_empty!(door_lock, "/vehicles/{}/command/door_lock", VehicleId);
+    post_arg_empty!(remote_start_drive, "/vehicles/{}/command/remote_start_drive", VehicleId);
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -134,7 +145,7 @@ pub struct ClimateState {
     pub driver_temp_setting: f64,
     pub fan_status: i64,
     pub hvac_auto_request: String,
-    pub inside_temp: f64,
+    pub inside_temp: Option<f64>,
     pub is_auto_conditioning_on: Option<bool>,
     pub is_climate_on: bool,
     pub is_front_defroster_on: bool,
@@ -342,6 +353,13 @@ pub struct SetChargingAmps {
 pub struct SetChargeLimit {
     // TODO: percent: Percentage,
     pub percent: u8,
+}
+
+#[derive(Debug, Serialize)]
+#[cfg_attr(feature = "cli", derive(clap::Args))]
+pub struct SetTemperatures {
+    pub driver_temp: f32,
+    pub passenger_temp: f32,
 }
 
 /// set_scheduled_charging
@@ -703,6 +721,26 @@ mod tests {
         let s = include_str!("../testdata/vehicle_data_HTLC_2023_10_09.json");
 
         let request_data = RequestData::Get {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
+        };
+        Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_vehicle_data_htlc_2023_10_18() {
+        let s = include_str!("../testdata/vehicle_data_HTLC_2023_10_18.json");
+
+        let request_data = RequestData::GET {
+            url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
+        };
+        Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+    }
+
+    #[test]
+    fn json_vehicle_data_htlc_2023_10_19() {
+        let s = include_str!("../testdata/vehicle_data_HTLC_2023_10_19.json");
+
+        let request_data = RequestData::GET {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
         Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();

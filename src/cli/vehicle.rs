@@ -1,6 +1,6 @@
 use crate::cli::print_json;
 use crate::vehicles::{
-    SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture,
+    SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture, SetTemperatures,
 };
 use crate::{Api, VehicleId};
 use clap::{Args, Subcommand};
@@ -45,6 +45,24 @@ pub enum VehicleCommand {
 
     /// Flash the lights.
     FlashLights,
+
+    /// Enable the HVAC
+    EnableHvac,
+
+    /// Disable the HVAC
+    DisableHvac,
+
+    /// Set the temperature for the HVAC
+    HvacTemperature(SetTemperatures),
+
+    /// Door unlock
+    DoorUnlock,
+
+    /// Door lock
+    DoorLock,
+
+    /// For keyless driving
+    RemoteStartDrive,
 }
 
 #[derive(Debug, Args)]
@@ -96,6 +114,24 @@ impl VehicleArgs {
             }
             VehicleCommand::FlashLights => {
                 print_json(api.flash_lights(&self.id).await);
+            }
+            VehicleCommand::EnableHvac => {
+                print_json(api.auto_conditioning_start(&self.id).await);
+            }
+            VehicleCommand::DisableHvac => {
+                print_json(api.auto_conditioning_stop(&self.id).await);
+            }
+            VehicleCommand::HvacTemperature(temps) => {
+                print_json(api.set_temps(&self.id, &temps).await);
+            }
+            VehicleCommand::DoorUnlock => {
+                print_json(api.door_unlock(&self.id).await);
+            }
+            VehicleCommand::DoorLock => {
+                print_json(api.door_lock(&self.id).await);
+            }
+            VehicleCommand::RemoteStartDrive => {
+                print_json(api.remote_start_drive(&self.id).await);
             }
         }
         Ok(())
