@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - API for HVAC: `auto_conditioning_start`, `auto_conditioning_stop`, `set_temps`.
-- API for locking: `door_lock`, `door_unlock`, `remote_start_drive`.
+- API for locking: `door_lock`, `door_unlock`.
+- API `remote_start_drive`.
+- API `wake_up`.
 
 ### Changed
 
