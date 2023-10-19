@@ -1,4 +1,4 @@
-all_tests: no_token_test token_tests
+all_tests: no_token_test token_tests audit
 
 no_token_test:
     cargo clippy --all-targets -- -D warnings
@@ -27,3 +27,6 @@ publish version:
 
 auth:
     cargo run -- auth --save
+
+audit:
+    cargo audit
