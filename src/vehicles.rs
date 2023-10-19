@@ -730,7 +730,7 @@ mod tests {
     fn json_vehicle_data_htlc_2023_10_18() {
         let s = include_str!("../testdata/vehicle_data_HTLC_2023_10_18.json");
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
         Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
@@ -740,7 +740,7 @@ mod tests {
     fn json_vehicle_data_htlc_2023_10_19() {
         let s = include_str!("../testdata/vehicle_data_HTLC_2023_10_19.json");
 
-        let request_data = RequestData::GET {
+        let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
         Api::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
