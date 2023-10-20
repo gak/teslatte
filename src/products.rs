@@ -1,13 +1,13 @@
 use crate::error::TeslatteError;
 use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
-use crate::{get, Api};
+use crate::{get, OwnerApi};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[rustfmt::skip]
-impl Api {
+impl OwnerApi {
     get!(products, Vec<Product>, "/products");
 }
 
@@ -226,7 +226,10 @@ mod tests {
             assert_eq!(v.api_version, 42);
             assert_eq!(v.backseat_token, None);
             assert_eq!(v.backseat_token_updated_at, None);
-            assert_eq!(v.vehicle_config.unwrap().aux_park_lamps, Some("Eu".to_string()));
+            assert_eq!(
+                v.vehicle_config.unwrap().aux_park_lamps,
+                Some("Eu".to_string())
+            );
         } else {
             panic!("Wrong EnergySite");
         }

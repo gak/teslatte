@@ -25,13 +25,13 @@ trait Values {
 
 /// Vehicle ID used by the owner-api endpoint.
 ///
-/// This data comes from [`Api::vehicles()`] `id` field.
+/// This data comes from [`OwnerApi::vehicles()`] `id` field.
 #[derive(Debug, Serialize, Deserialize, Clone, Display, FromStr)]
 pub struct VehicleId(u64);
 
 /// Vehicle ID used by other endpoints.
 ///
-/// This data comes from [`Api::vehicles()`] `vehicle_id` field.
+/// This data comes from [`OwnerApi::vehicles()`] `vehicle_id` field.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExternalVehicleId(u64);
 
@@ -53,15 +53,15 @@ impl Display for RequestData<'_> {
 ///
 /// Main entry point for the API. It contains the access token and refresh token, and can be used
 /// to make requests to the API.
-pub struct Api {
+pub struct OwnerApi {
     pub access_token: AccessToken,
     pub refresh_token: Option<RefreshToken>,
     client: Client,
 }
 
-impl Api {
+impl OwnerApi {
     pub fn new(access_token: AccessToken, refresh_token: Option<RefreshToken>) -> Self {
-        Api {
+        OwnerApi {
             access_token,
             refresh_token,
             client: Client::builder()
@@ -119,7 +119,10 @@ impl Api {
 
         let response_body = request_builder
             .header("Accept", "application/json")
-            .header("Authorization", format!("Bearer {}", self.access_token.0.trim()))
+            .header(
+                "Authorization",
+                format!("Bearer {}", self.access_token.0.trim()),
+            )
             .send()
             .await
             .map_err(|source| TeslatteError::FetchError {
@@ -347,7 +350,7 @@ mod tests {
             payload: "doesn't matter",
         };
 
-        let e = Api::parse_json::<ChargeState>(&request_data, s.to_string());
+        let e = OwnerApi::parse_json::<ChargeState>(&request_data, s.to_string());
         if let Err(e) = e {
             if let TeslatteError::ServerError {
                 msg, description, ..

@@ -2,7 +2,7 @@ use crate::cli::print_json;
 use crate::vehicles::{
     SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture, SetTemperatures,
 };
-use crate::{Api, VehicleId};
+use crate::{OwnerApi, VehicleId};
 use clap::{Args, Subcommand};
 
 #[derive(Debug, Subcommand)]
@@ -74,7 +74,7 @@ pub struct VehicleArgs {
 }
 
 impl VehicleArgs {
-    pub async fn run(self, api: &Api) -> miette::Result<()> {
+    pub async fn run(self, api: &OwnerApi) -> miette::Result<()> {
         match self.command {
             VehicleCommand::VehicleData => {
                 print_json(api.vehicle_data(&self.id).await);

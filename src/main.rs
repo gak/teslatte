@@ -5,7 +5,7 @@ use teslatte::cli::energy::EnergySiteArgs;
 use teslatte::cli::powerwall::PowerwallArgs;
 use teslatte::cli::print_json;
 use teslatte::cli::vehicle::VehicleArgs;
-use teslatte::Api;
+use teslatte::OwnerApi;
 
 /// Teslatte
 ///
@@ -76,7 +76,7 @@ async fn main() -> miette::Result<()> {
 
     match args.command {
         Command::Auth { save } => {
-            let api = Api::from_interactive_url().await?;
+            let api = OwnerApi::from_interactive_url().await?;
             print_or_save_tokens(save, &api);
         }
         Command::Refresh { refresh_token } => {
@@ -88,7 +88,7 @@ async fn main() -> miette::Result<()> {
                 }
             };
 
-            let api = Api::from_refresh_token(&refresh_token).await?;
+            let api = OwnerApi::from_refresh_token(&refresh_token).await?;
             print_or_save_tokens(save, &api);
         }
         Command::Api(api_args) => {
@@ -103,7 +103,7 @@ async fn main() -> miette::Result<()> {
                 }
             };
 
-            let api = Api::new(access_token, refresh_token);
+            let api = OwnerApi::new(access_token, refresh_token);
             match api_args.command {
                 ApiCommand::Vehicles => {
                     print_json(api.vehicles().await);
@@ -126,7 +126,7 @@ async fn main() -> miette::Result<()> {
     Ok(())
 }
 
-fn print_or_save_tokens(save: bool, api: &Api) {
+fn print_or_save_tokens(save: bool, api: &OwnerApi) {
     let access_token = api.access_token.clone();
     let refresh_token = api.refresh_token.clone().unwrap();
 

@@ -1,16 +1,16 @@
 use std::env;
 use teslatte::auth::AccessToken;
 use teslatte::products::Product;
-use teslatte::Api;
+use teslatte::OwnerApi;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
     let api = match env::var("TESLA_ACCESS_TOKEN") {
-        Ok(t) => Api::new(AccessToken(t), None),
+        Ok(t) => OwnerApi::new(AccessToken(t), None),
         Err(_) => {
-            let api = Api::from_interactive_url().await.unwrap();
+            let api = OwnerApi::from_interactive_url().await.unwrap();
             println!("TOKEN: {:?}", api.access_token);
             api
         }

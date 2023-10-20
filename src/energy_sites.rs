@@ -1,11 +1,11 @@
 use crate::products::EnergySiteId;
-use crate::{get_arg, get_args, join_query_pairs, rfc3339, Api, Values};
+use crate::{get_arg, get_args, join_query_pairs, rfc3339, OwnerApi, Values};
 use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
 use strum::{Display, EnumString, IntoStaticStr};
 
 #[rustfmt::skip]
-impl Api {
+impl OwnerApi {
     get_arg!(energy_sites_site_status, SiteStatus, "/energy_sites/{}/site_status", EnergySiteId);
     get_arg!(energy_sites_live_status, LiveStatus, "/energy_sites/{}/live_status", EnergySiteId);
     get_arg!(energy_sites_site_info, SiteInfo, "/energy_sites/{}/site_info", EnergySiteId);

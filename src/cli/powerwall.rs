@@ -1,7 +1,7 @@
 use crate::cli::print_json_data;
 use crate::energy_sites::{HistoryKind, HistoryPeriod};
 use crate::powerwall::{PowerwallEnergyHistoryValues, PowerwallId};
-use crate::Api;
+use crate::OwnerApi;
 use clap::{Args, Subcommand};
 
 #[derive(Debug, Subcommand)]
@@ -21,7 +21,7 @@ pub struct PowerwallArgs {
 }
 
 impl PowerwallArgs {
-    pub async fn run(&self, api: &Api) -> miette::Result<()> {
+    pub async fn run(&self, api: &OwnerApi) -> miette::Result<()> {
         match self.command {
             PowerwallCommand::Status => {
                 print_json_data(api.powerwall_status(&self.id).await?);
