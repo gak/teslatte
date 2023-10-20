@@ -17,7 +17,11 @@ Currently, it only supports some the API.
 
 It is fairly trivial to add in new endpoints if you feel like creating a PR. Please let me know if your PR is a massive change before spending a lot of time on it.
 
+## References
+
 Thanks to https://tesla-api.timdorr.com/ for their excellent reference.
+
+Tesla API recently released [API documentation for their "Fleet API"](https://developer.tesla.com/docs/fleet-api) which appears to be similar to the Tesla App API.
 
 ## CLI
 
