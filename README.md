@@ -21,7 +21,7 @@ It is fairly trivial to add in new endpoints if you feel like creating a PR. Ple
 
 Thanks to https://tesla-api.timdorr.com/ for their excellent reference.
 
-Tesla API recently released [API documentation for their "Fleet API"](https://developer.tesla.com/docs/fleet-api) which appears to be similar to the Tesla App API.
+Tesla API recently released [API documentation for their "Fleet API"](https://developer.tesla.com/docs/fleet-api) which appears to be similar to the Tesla Owner API.
 
 ## CLI
 
