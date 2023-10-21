@@ -7,7 +7,9 @@
 > #### ⚠️ Alpha Warning! ⚠️
 > This Rust crate is still in alpha stage. It is something I quickly put together if anyone needed it. I'm aiming to work on it as I need more features.
 > 
-> `0.1.x` will have breaking API changes. Don't rely on this project for anything important yet.
+> `0.1.x` will have breaking API changes. Don't rely on this project for anything important yet.'
+>
+> Using Rust nightly until `async_fn_in_trait` is stable (apparently for Rust v1.74, near the end of 2023).
 
 Teslatte is both a CLI and a Rust crate for interacting with the Tesla API.
 
