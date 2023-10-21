@@ -1,4 +1,6 @@
-#![feature(async_fn_in_trait)]
+// Ignores: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+// TODO: Maybe use the suggestion of removing async and replacing it with Future<Output = Result<...>>
+#![allow(async_fn_in_trait)]
 
 use crate::auth::{AccessToken, RefreshToken};
 use crate::error::TeslatteError;
