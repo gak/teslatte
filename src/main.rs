@@ -3,9 +3,8 @@ use serde::{Deserialize, Serialize};
 use teslatte::auth::{AccessToken, RefreshToken};
 use teslatte::cli::energy::EnergySiteArgs;
 use teslatte::cli::powerwall::PowerwallArgs;
-use teslatte::cli::print_json;
 use teslatte::cli::vehicle::VehicleArgs;
-use teslatte::OwnerApi;
+use teslatte::{OwnerApi, PrintResponses, VehicleApi};
 
 /// Teslatte
 ///
@@ -103,16 +102,17 @@ async fn main() -> miette::Result<()> {
                 }
             };
 
-            let api = OwnerApi::new(access_token, refresh_token);
+            let mut api = OwnerApi::new(access_token, refresh_token);
+            api.print_responses = PrintResponses::Pretty;
             match api_args.command {
                 ApiCommand::Vehicles => {
-                    print_json(api.vehicles().await);
+                    api.vehicles().await?;
                 }
                 ApiCommand::Vehicle(v) => {
                     v.run(&api).await?;
                 }
                 ApiCommand::Products => {
-                    print_json(api.products().await);
+                    api.products().await?;
                 }
                 ApiCommand::EnergySite(e) => {
                     e.run(&api).await?;

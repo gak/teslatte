@@ -3,12 +3,13 @@
 /// Sometimes the API will return a null for a field where I've put in a non Option type, which
 /// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
 use crate::{
-    get, get_arg, post_arg, post_arg_empty, Empty, ExternalVehicleId, OwnerApi, VehicleId,
+    get, get_arg, post_arg, post_arg_empty, Empty, ExternalVehicleId, OwnerApi, VehicleApi,
+    VehicleId,
 };
 use serde::{Deserialize, Serialize};
 
 #[rustfmt::skip]
-impl OwnerApi {
+impl VehicleApi for OwnerApi {
     get!(vehicles, Vec<Vehicle>, "/vehicles");
     get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
     post_arg_empty!(wake_up, "/vehicles/{}/command/wake_up", VehicleId);
@@ -414,7 +415,7 @@ pub struct SetScheduledDeparture {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::RequestData;
+    use crate::{PrintResponses, RequestData};
 
     #[test]
     fn json_charge_state() {
@@ -484,7 +485,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/charge_state",
         };
-        OwnerApi::parse_json::<ChargeState>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<ChargeState>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -531,7 +533,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/climate_state",
         };
-        OwnerApi::parse_json::<ClimateState>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<ClimateState>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -558,7 +561,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/drive_state",
         };
-        OwnerApi::parse_json::<DriveState>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<DriveState>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -580,7 +584,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/gui_settings",
         };
-        OwnerApi::parse_json::<GuiSettings>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<GuiSettings>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -630,7 +635,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/vehicle_config",
         };
-        OwnerApi::parse_json::<VehicleConfig>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleConfig>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -705,7 +711,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/data_request/vehicle_state",
         };
-        OwnerApi::parse_json::<VehicleState>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleState>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -715,7 +722,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
-        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -725,7 +733,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
-        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -735,7 +744,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
-        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -745,7 +755,8 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
-        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 
     #[test]
@@ -755,6 +766,7 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
-        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string()).unwrap();
+        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 }

@@ -1,7 +1,7 @@
 use std::env;
 use teslatte::auth::AccessToken;
 use teslatte::products::Product;
-use teslatte::OwnerApi;
+use teslatte::{OwnerApi, VehicleApi};
 
 #[tokio::main]
 async fn main() {
@@ -21,7 +21,7 @@ async fn main() {
 
     if !vehicles.is_empty() {
         let vehicle_data = api.vehicle_data(&vehicles[0].id).await.unwrap();
-        dbg!(&*vehicle_data);
+        dbg!(&vehicle_data);
     } else {
         println!("No vehicles found!");
     }
@@ -38,13 +38,13 @@ async fn main() {
 
                 Product::Solar(e) => {
                     let site_info = api.energy_sites_site_info(&e.energy_site_id).await.unwrap();
-                    dbg!(&*site_info);
+                    dbg!(&site_info);
 
                     let live_info = api
                         .energy_sites_live_status(&e.energy_site_id)
                         .await
                         .unwrap();
-                    dbg!(&*live_info);
+                    dbg!(&live_info);
                 }
 
                 Product::Powerwall(p) => {
@@ -52,7 +52,7 @@ async fn main() {
                         .energy_sites_live_status(&p.energy_site_id)
                         .await
                         .unwrap();
-                    dbg!(&*live_info);
+                    dbg!(&live_info);
                 }
             }
         }

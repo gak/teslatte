@@ -1,14 +1,14 @@
 use crate::error::TeslatteError;
 use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
-use crate::{get, OwnerApi};
+use crate::{pub_get, OwnerApi};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[rustfmt::skip]
 impl OwnerApi {
-    get!(products, Vec<Product>, "/products");
+    pub_get!(products, Vec<Product>, "/products");
 }
 
 #[derive(Debug, Clone, Deserialize, Display)]
