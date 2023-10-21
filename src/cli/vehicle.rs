@@ -1,8 +1,7 @@
-use crate::cli::print_json;
 use crate::vehicles::{
     SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture, SetTemperatures,
 };
-use crate::{Api, VehicleId};
+use crate::{OwnerApi, VehicleApi, VehicleId};
 use clap::{Args, Subcommand};
 
 #[derive(Debug, Subcommand)]
@@ -74,64 +73,64 @@ pub struct VehicleArgs {
 }
 
 impl VehicleArgs {
-    pub async fn run(self, api: &Api) -> miette::Result<()> {
+    pub async fn run(self, api: &OwnerApi) -> miette::Result<()> {
         match self.command {
             VehicleCommand::VehicleData => {
-                print_json(api.vehicle_data(&self.id).await);
+                api.vehicle_data(&self.id).await?;
             }
             VehicleCommand::SetChargeLimit(limit) => {
-                print_json(api.set_charge_limit(&self.id, &limit).await);
+                api.set_charge_limit(&self.id, &limit).await?;
             }
             VehicleCommand::SetChargingAmps(charging_amps) => {
-                print_json(api.set_charging_amps(&self.id, &charging_amps).await);
+                api.set_charging_amps(&self.id, &charging_amps).await?;
             }
             VehicleCommand::ChargeStart => {
-                print_json(api.charge_start(&self.id).await);
+                api.charge_start(&self.id).await?;
             }
             VehicleCommand::ChargeStop => {
-                print_json(api.charge_stop(&self.id).await);
+                api.charge_stop(&self.id).await?;
             }
             VehicleCommand::ChargePortDoorOpen => {
-                print_json(api.charge_port_door_open(&self.id).await);
+                api.charge_port_door_open(&self.id).await?;
             }
             VehicleCommand::ChargePortDoorClose => {
-                print_json(api.charge_port_door_close(&self.id).await);
+                api.charge_port_door_close(&self.id).await?;
             }
             VehicleCommand::ChargeStandard => {
-                print_json(api.charge_standard(&self.id).await);
+                api.charge_standard(&self.id).await?;
             }
             VehicleCommand::ChargeMaxRange => {
-                print_json(api.charge_max_range(&self.id).await);
+                api.charge_max_range(&self.id).await?;
             }
             VehicleCommand::SetScheduledCharging(charging) => {
-                print_json(api.set_scheduled_charging(&self.id, &charging).await);
+                api.set_scheduled_charging(&self.id, &charging).await?;
             }
             VehicleCommand::SetScheduledDeparture(departure) => {
-                print_json(api.set_scheduled_departure(&self.id, &departure).await);
+                api.set_scheduled_departure(&self.id, &departure).await?;
             }
             VehicleCommand::HonkHorn => {
-                print_json(api.honk_horn(&self.id).await);
+                api.honk_horn(&self.id).await?;
             }
             VehicleCommand::FlashLights => {
-                print_json(api.flash_lights(&self.id).await);
+                api.flash_lights(&self.id).await?;
             }
             VehicleCommand::EnableHvac => {
-                print_json(api.auto_conditioning_start(&self.id).await);
+                api.auto_conditioning_start(&self.id).await?;
             }
             VehicleCommand::DisableHvac => {
-                print_json(api.auto_conditioning_stop(&self.id).await);
+                api.auto_conditioning_stop(&self.id).await?;
             }
             VehicleCommand::HvacTemperature(temps) => {
-                print_json(api.set_temps(&self.id, &temps).await);
+                api.set_temps(&self.id, &temps).await?;
             }
             VehicleCommand::DoorUnlock => {
-                print_json(api.door_unlock(&self.id).await);
+                api.door_unlock(&self.id).await?;
             }
             VehicleCommand::DoorLock => {
-                print_json(api.door_lock(&self.id).await);
+                api.door_lock(&self.id).await?;
             }
             VehicleCommand::RemoteStartDrive => {
-                print_json(api.remote_start_drive(&self.id).await);
+                api.remote_start_drive(&self.id).await?;
             }
         }
         Ok(())

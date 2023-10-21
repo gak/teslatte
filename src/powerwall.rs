@@ -1,14 +1,14 @@
 use crate::energy_sites::{HistoryKind, HistoryPeriod};
 use crate::products::GatewayId;
-use crate::{get_arg, get_args, join_query_pairs, rfc3339, Api, Values};
+use crate::{join_query_pairs, pub_get_arg, pub_get_args, rfc3339, OwnerApi, Values};
 use chrono::{DateTime, FixedOffset};
 use derive_more::{Display, FromStr};
 use serde::{Deserialize, Serialize};
 
 #[rustfmt::skip]
-impl Api {
-    get_arg!(powerwall_status, PowerwallStatus, "/powerwalls/{}/status", PowerwallId);
-    get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);
+impl OwnerApi {
+    pub_get_arg!(powerwall_status, PowerwallStatus, "/powerwalls/{}/status", PowerwallId);
+    pub_get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Display, FromStr)]

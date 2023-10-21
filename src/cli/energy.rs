@@ -1,7 +1,6 @@
-use crate::cli::print_json;
 use crate::energy_sites::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
 use crate::products::EnergySiteId;
-use crate::Api;
+use crate::OwnerApi;
 use chrono::DateTime;
 use clap::{Args, Subcommand};
 use miette::{IntoDiagnostic, WrapErr};
@@ -23,16 +22,16 @@ pub struct EnergySiteArgs {
 }
 
 impl EnergySiteArgs {
-    pub async fn run(&self, api: &Api) -> miette::Result<()> {
+    pub async fn run(&self, api: &OwnerApi) -> miette::Result<()> {
         match &self.command {
             EnergySiteCommand::SiteStatus => {
-                print_json(api.energy_sites_site_status(&self.id).await);
+                api.energy_sites_site_status(&self.id).await?;
             }
             EnergySiteCommand::LiveStatus => {
-                print_json(api.energy_sites_live_status(&self.id).await);
+                api.energy_sites_live_status(&self.id).await?;
             }
             EnergySiteCommand::SiteInfo => {
-                print_json(api.energy_sites_site_info(&self.id).await);
+                api.energy_sites_site_info(&self.id).await?;
             }
             EnergySiteCommand::CalendarHistory(args) => {
                 let start_date = args
@@ -54,7 +53,7 @@ impl EnergySiteArgs {
                     start_date,
                     end_date,
                 };
-                print_json(api.energy_sites_calendar_history(&values).await);
+                api.energy_sites_calendar_history(&values).await?;
             }
         }
         Ok(())

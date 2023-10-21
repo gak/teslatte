@@ -1,5 +1,5 @@
 use crate::error::TeslatteError::{CouldNotFindCallbackCode, CouldNotFindState};
-use crate::{Api, TeslatteError};
+use crate::{OwnerApi, TeslatteError};
 use derive_more::{Display, FromStr};
 use rand::Rng;
 use reqwest::Client;
@@ -22,11 +22,11 @@ struct Callback {
     state: String,
 }
 
-impl Api {
+impl OwnerApi {
     /// Show a URL for the user to click on to log into tesla.com, the ask them to paste the
     /// URL they end up on, which is a 404 page. The URL contains OAuth information needed to
     /// complete authentication for an access key.
-    pub async fn from_interactive_url() -> Result<Api, TeslatteError> {
+    pub async fn from_interactive_url() -> Result<OwnerApi, TeslatteError> {
         let login_form = Self::get_login_url_for_user().await;
         println!("{}", "-".repeat(80));
         println!("{}", login_form.url);
@@ -40,12 +40,12 @@ page, where the URL will start with https://auth.tesla.com/void/callback?code=..
         let callback_url = ask_input("Enter the whole URL of the 404 page: ");
         println!(); // Newline to make the next output more separated and clear.
 
-        Api::from_callback_url(&login_form, &callback_url).await
+        OwnerApi::from_callback_url(&login_form, &callback_url).await
     }
 
     /// Generate a [LoginForm] containing a URL the user should visit.
     ///
-    /// See [Api::from_callback_url()] for the next step.
+    /// See [OwnerApi::from_callback_url()] for the next step.
     pub async fn get_login_url_for_user() -> LoginForm {
         let code = Code::new();
         let state = random_string(8);
@@ -54,11 +54,11 @@ page, where the URL will start with https://auth.tesla.com/void/callback?code=..
     }
 
     /// Parse a callback URL that the user was redirected to after logging in via
-    /// [Api::from_interactive_url()].
+    /// [OwnerApi::from_interactive_url()].
     pub async fn from_callback_url(
         login_form: &LoginForm,
         callback_url: &str,
-    ) -> Result<Api, TeslatteError> {
+    ) -> Result<OwnerApi, TeslatteError> {
         let callback = Self::extract_callback_from_url(callback_url)?;
         if callback.state != login_form.state {
             return Err(TeslatteError::StateMismatch {
@@ -70,12 +70,14 @@ page, where the URL will start with https://auth.tesla.com/void/callback?code=..
         let bearer = Self::exchange_auth_for_bearer(&login_form.code, &callback.code).await?;
         let access_token = AccessToken(bearer.access_token);
         let refresh_token = RefreshToken(bearer.refresh_token);
-        Ok(Api::new(access_token, Some(refresh_token)))
+        Ok(OwnerApi::new(access_token, Some(refresh_token)))
     }
 
-    pub async fn from_refresh_token(refresh_token: &RefreshToken) -> Result<Api, TeslatteError> {
+    pub async fn from_refresh_token(
+        refresh_token: &RefreshToken,
+    ) -> Result<OwnerApi, TeslatteError> {
         let response = Self::refresh_token(refresh_token).await?;
-        Ok(Api::new(
+        Ok(OwnerApi::new(
             response.access_token,
             Some(response.refresh_token),
         ))

@@ -1,15 +1,15 @@
 use crate::products::EnergySiteId;
-use crate::{get_arg, get_args, join_query_pairs, rfc3339, Api, Values};
+use crate::{join_query_pairs, pub_get_arg, pub_get_args, rfc3339, OwnerApi, Values};
 use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
 use strum::{Display, EnumString, IntoStaticStr};
 
 #[rustfmt::skip]
-impl Api {
-    get_arg!(energy_sites_site_status, SiteStatus, "/energy_sites/{}/site_status", EnergySiteId);
-    get_arg!(energy_sites_live_status, LiveStatus, "/energy_sites/{}/live_status", EnergySiteId);
-    get_arg!(energy_sites_site_info, SiteInfo, "/energy_sites/{}/site_info", EnergySiteId);
-    get_args!(energy_sites_calendar_history, CalendarHistory, "/energy_sites/{}/calendar_history", CalendarHistoryValues);
+impl OwnerApi {
+    pub_get_arg!(energy_sites_site_status, SiteStatus, "/energy_sites/{}/site_status", EnergySiteId);
+    pub_get_arg!(energy_sites_live_status, LiveStatus, "/energy_sites/{}/live_status", EnergySiteId);
+    pub_get_arg!(energy_sites_site_info, SiteInfo, "/energy_sites/{}/site_info", EnergySiteId);
+    pub_get_args!(energy_sites_calendar_history, CalendarHistory, "/energy_sites/{}/calendar_history", CalendarHistoryValues);
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -22,8 +22,10 @@ pub struct SiteStatus {
     pub gateway_id: String,
     pub percentage_charged: f64,
     pub powerwall_onboarding_settings_set: bool,
-    pub powerwall_tesla_electric_interested_in: Option<()>, // TODO: Unknown type. Was null.
-    pub resource_type: String,                              // battery
+    // TODO: Unknown type. Was null.
+    pub powerwall_tesla_electric_interested_in: Option<()>,
+    // battery
+    pub resource_type: String,
     pub site_name: String,
     pub storm_mode_enabled: bool,
     pub sync_grid_alert_enabled: bool,
