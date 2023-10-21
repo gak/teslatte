@@ -9,7 +9,7 @@
 > 
 > `0.1.x` will have breaking API changes. Don't rely on this project for anything important yet.'
 >
-> Using Rust nightly until `async_fn_in_trait` is stable (apparently for Rust v1.74, near the end of 2023).
+> Using Rust nightly until `async_fn_in_trait` is stable.
 
 Teslatte is both a CLI and a Rust crate for interacting with the Tesla API.
 
