@@ -1,7 +1,8 @@
 mod fleet;
+mod timdorr;
 mod vehicle_command;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use scraper::Element;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -21,9 +22,6 @@ struct Cli {
     /// Use the cached html if exists, to avoid making requests.
     #[clap(short, long)]
     cached: bool,
-
-    #[clap(short = 'v', long)]
-    only_vehicle_command: bool,
 }
 
 #[tokio::main]
@@ -31,43 +29,27 @@ async fn main() {
     tracing_subscriber::fmt::init();
     let args = Cli::parse();
 
-    // let timorr = cache_fetch(TIMDORR_URL, TIMDORR_FILE, args.cache).await;
-    //
-    // let fleet_html = cache_fetch(
-    //     FLEET_API_URL,
-    //     FLEET_API_FILE,
-    //     args.cache,
-    // )
-    // .await;
-    //
-    // let command_golang = cache_fetch(
-    //     VEHICLE_COMMAND_URL,
-    //     VEHICLE_COMMAND_FILE,
-    //     args.cache,
-    // ).await;
-
-    let (timorr, fleet_html, command_golang) = tokio::join!(
+    let (timdorr, fleet_html, command_golang) = tokio::join!(
         cache_fetch(TIMDORR_URL, TIMDORR_FILE, args.cached),
         cache_fetch(FLEET_API_URL, FLEET_API_FILE, args.cached),
         cache_fetch(VEHICLE_COMMAND_URL, VEHICLE_COMMAND_FILE, args.cached)
     );
 
-    let mut vehicle_command = true;
-    let mut fleet_api = true;
-    let mut timdorr = true;
+    let timdorr_endpoints = timdorr::parse(&timdorr);
+    let fleet_endpoints = fleet::parse(&fleet_html);
+    let vehicle_command_endpoints = vehicle_command::parse(&command_golang);
 
-    if args.only_vehicle_command {
-        fleet_api = false;
-        timdorr = false;
-    }
+    // Make hashsets from all the keys and see what's different between timdorr and fleet
+    let timdorr_keys: std::collections::HashSet<&String> = timdorr_endpoints.keys().collect();
+    let fleet_keys: std::collections::HashSet<&String> = fleet_endpoints.keys().collect();
 
-    if fleet_api {
-        fleet::parse(&fleet_html);
-    }
+    let timdorr_only = timdorr_keys.difference(&fleet_keys);
+    let fleet_only = fleet_keys.difference(&timdorr_keys);
+    let both = timdorr_keys.intersection(&fleet_keys);
 
-    if vehicle_command {
-        vehicle_command::parse(&command_golang);
-    }
+    info!("Timdorr only: {:?}", timdorr_only);
+    info!("Fleet only: {:?}", fleet_only);
+    info!("Both: {:?}", both);
 }
 
 async fn cache_fetch(url: &str, filename: &str, cache: bool) -> String {

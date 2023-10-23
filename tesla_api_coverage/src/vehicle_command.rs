@@ -4,31 +4,41 @@ use nom::character::complete::{char, line_ending, space0, space1, tab};
 use nom::combinator::opt;
 use nom::multi::{many0, many1};
 use nom::IResult;
-use tracing::{trace, warn};
+use std::collections::HashMap;
+use tracing::{debug, trace, warn};
 
-pub fn parse(s: &str) -> () {
+pub fn parse(s: &str) -> HashMap<String, VehicleCommandEndpoint> {
     // Seek all the way to: var commands = map[string]*Command{\n
     // Afterwards has the first map entry.
-    let commands_start = "var commands = map[string]*Command{\n";
-    let offset = s.find(commands_start).unwrap();
-    let s = &s[offset + commands_start.len()..];
+    let (s, _) = seek_to_map(s).unwrap();
 
-    let (go, entries) = many1(map_entry)(s).unwrap();
+    let (_, entries) = many1(map_entry)(s).unwrap();
 
-    dbg!(&entries);
+    entries
+        .into_iter()
+        .map(|e| (e.endpoint.clone(), e))
+        .collect()
+}
 
-    warn!("todo: parse")
+pub fn seek_to_map(s: &str) -> IResult<&str, ()> {
+    short_trace("seek to map", s);
+    let tag_str = "var commands = map[string]*Command{\n";
+    // There's gotta be a nom function to these two lines.
+    let (s, _) = take_until(tag_str)(s)?;
+    let (s, _) = tag(tag_str)(s)?;
+    short_trace("seek to map done", s);
+    Ok((s, ()))
 }
 
 #[derive(Debug)]
-struct MapEntry {
-    endpoint: String,
-    help: String,
-    // requires_auth: bool,
-    // requires_fleet: bool,
+pub struct VehicleCommandEndpoint {
+    pub endpoint: String,
+    pub help: String,
+    pub requires_auth: bool,
+    pub requires_fleet: bool,
 }
 
-fn map_entry(s: &str) -> IResult<&str, MapEntry> {
+fn map_entry(s: &str) -> IResult<&str, VehicleCommandEndpoint> {
     // "unlock": &Command{
     // 	help:             "Unlock vehicle",
     // 	requiresAuth:     true,
@@ -66,17 +76,16 @@ fn map_entry(s: &str) -> IResult<&str, MapEntry> {
     short_trace("requiresFleetAPI", s);
     let (s, requires_fleet) = bool_field_or_false(s, "requiresFleetAPI:")?;
 
-    // required args
+    // Required args
     short_trace("required args", s);
     let (s, required_args) = args(s, "args: []Argument{")?;
 
-    // optional args
+    // Optional args
     short_trace("optional args", s);
     let (s, optional_args) = args(s, "optional: []Argument{")?;
 
-    // check and ignore the handler, as there's not really much data we can take out of it.
+    // Ignore the handler, as there's not really much data we can take out of it.
     let (s, _) = ignore_whitespace(s)?;
-
     let (s, _) = take_until("},")(s)?;
     let (s, _) = tag("},")(s)?;
 
@@ -84,15 +93,15 @@ fn map_entry(s: &str) -> IResult<&str, MapEntry> {
     let (s, _) = take_until("},")(s)?;
     let (s, _) = tag("},")(s)?;
 
-    dbg!(endpoint, help, requires_auth, requires_fleet);
+    let map_entry = VehicleCommandEndpoint {
+        endpoint: endpoint.to_string(),
+        help: help.to_string(),
+        requires_auth,
+        requires_fleet,
+    };
+    debug!(?map_entry);
 
-    Ok((
-        s,
-        MapEntry {
-            endpoint: endpoint.to_string(),
-            help: help.to_string(),
-        },
-    ))
+    Ok((s, map_entry))
 }
 
 /// Ignore the quotes and return the inner string.

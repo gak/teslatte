@@ -1,9 +1,11 @@
+use heck::ToKebabCase;
 use scraper::{Element, ElementRef, Html, Selector};
 use std::collections::HashMap;
 use std::str::FromStr;
+use tracing::debug;
 
 struct FleetApiSpec {
-    calls: HashMap<String, Call>,
+    calls: HashMap<String, FleetEndpoint>,
 }
 
 // e.g. serialize to similar: vehicle-endpoints
@@ -56,7 +58,7 @@ enum InRequestData {
     Body,
 }
 
-struct Parameter {
+pub struct Parameter {
     name: String,
     request: InRequestData,
     var_type: String,
@@ -64,23 +66,26 @@ struct Parameter {
     description: String,
 }
 
-struct Call {
+#[derive(Debug)]
+pub struct FleetEndpoint {
     name: String,
     method: reqwest::Method,
     url_definition: String,
-    description: String,
-    category: Category,
-    scopes: Vec<Scope>,
-    parameters: Vec<Parameter>,
-    request_example: String,
-    response_example: String,
+    // description: String,
+    // category: Category,
+    // scopes: Vec<Scope>,
+    // parameters: Vec<Parameter>,
+    // request_example: String,
+    // response_example: String,
 }
 
-pub fn parse(html: &str) -> () {
+pub fn parse(html: &str) -> HashMap<String, FleetEndpoint> {
     let document = Html::parse_document(html);
     let content_selector = selector(".content h1");
     let mut element = document.select(&content_selector).next().unwrap();
     let mut category = None;
+
+    let mut map = HashMap::with_capacity(100);
 
     // Iterate over all the elements in the content section until we see a h1 or h2.
     loop {
@@ -91,17 +96,20 @@ pub fn parse(html: &str) -> () {
             }
             "h2" => {
                 if category.is_some() {
-                    let name = element.inner_html();
-                    println!("{category:?} {name:?}");
-                    // let call = parse_call(element);
+                    let name = element.inner_html().to_kebab_case();
+                    let call = parse_call(element);
+
+                    if let Some(endpoint) = call {
+                        debug!("{category:?} {endpoint:?}");
+                        map.insert(name, endpoint);
+                    }
                 }
             }
             _ => {}
         }
 
         let Some(next_element) = element.next_sibling_element() else {
-            println!("exiting...");
-            break;
+            return map;
         };
         element = next_element;
     }
@@ -110,7 +118,7 @@ pub fn parse(html: &str) -> () {
 /// Return None if this is not an endpoint.
 ///
 /// Will panic if it looks like an endpoint and has trouble parsing.
-fn parse_call(element: ElementRef) -> Option<Call> {
+fn parse_call(element: ElementRef) -> Option<FleetEndpoint> {
     let name = element.value().id().unwrap();
 
     // <p><span class="endpoint"><code>POST /api/1/vehicles/{id}/command/auto_conditioning_start</code></span></p>
@@ -122,7 +130,6 @@ fn parse_call(element: ElementRef) -> Option<Call> {
     }
 
     let (method, url) = url.split_once(' ').unwrap();
-    println!("{} {}", method, url);
 
     // <p>scopes: <em>vehicle_cmds</em></p>
     let (fragment, element) = next(element);
@@ -156,7 +163,11 @@ fn parse_call(element: ElementRef) -> Option<Call> {
         panic!("No examples for {}", name);
     }
 
-    None
+    Some(FleetEndpoint {
+        name: name.to_string(),
+        method: reqwest::Method::from_bytes(method.as_bytes()).unwrap(),
+        url_definition: url.to_string(),
+    })
 }
 
 fn next(element: ElementRef) -> (Html, ElementRef) {
