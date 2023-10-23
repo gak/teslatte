@@ -1,5 +1,5 @@
 [package]
-name = "scrape_fleet_api"
+name = "tesla_api_coverage"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,10 @@ edition = "2021"
 reqwest = "0.11.22"
 tokio = { version = "1.33.0", features = ["full"] }
 clap = { version = "4.4.6", features = ["derive"] }
-tracing-subscriber = "0.3.17"
 scraper = "0.17.1"
 strum = { version = "0.25.0", features = ["derive"] }
+tracing-subscriber = "0.3.17"
+tracing = "0.1.40"
+log = "0.4.20"
+nom = "7.1.3"
+anyhow = "1.0.75"
