@@ -1,4 +1,6 @@
 mod fleet;
+mod nom_help;
+mod teslatte;
 mod timdorr;
 mod vehicle_command;
 
@@ -35,21 +37,26 @@ async fn main() {
         cache_fetch(VEHICLE_COMMAND_URL, VEHICLE_COMMAND_FILE, args.cached)
     );
 
-    let timdorr_endpoints = timdorr::parse(&timdorr);
-    let fleet_endpoints = fleet::parse(&fleet_html);
-    let vehicle_command_endpoints = vehicle_command::parse(&command_golang);
+    // let timdorr_endpoints = timdorr::parse(&timdorr);
+    // let fleet_endpoints = fleet::parse(&fleet_html);
+    // let vehicle_command_endpoints = vehicle_command::parse(&command_golang);
 
-    // Make hashsets from all the keys and see what's different between timdorr and fleet
-    let timdorr_keys: std::collections::HashSet<&String> = timdorr_endpoints.keys().collect();
-    let fleet_keys: std::collections::HashSet<&String> = fleet_endpoints.keys().collect();
+    let mut teslatte_project_path = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
+    teslatte_project_path.push("..");
 
-    let timdorr_only = timdorr_keys.difference(&fleet_keys);
-    let fleet_only = fleet_keys.difference(&timdorr_keys);
-    let both = timdorr_keys.intersection(&fleet_keys);
+    let teslatte_endpoints = teslatte::parse(&teslatte_project_path);
 
-    info!("Timdorr only: {:?}", timdorr_only);
-    info!("Fleet only: {:?}", fleet_only);
-    info!("Both: {:?}", both);
+    // // Make hashsets from all the keys and see what's different between timdorr and fleet
+    // let timdorr_keys: std::collections::HashSet<&String> = timdorr_endpoints.keys().collect();
+    // let fleet_keys: std::collections::HashSet<&String> = fleet_endpoints.keys().collect();
+    //
+    // let timdorr_only = timdorr_keys.difference(&fleet_keys);
+    // let fleet_only = fleet_keys.difference(&timdorr_keys);
+    // let both = timdorr_keys.intersection(&fleet_keys);
+    //
+    // info!("Timdorr only: {:?}", timdorr_only);
+    // info!("Fleet only: {:?}", fleet_only);
+    // info!("Both: {:?}", both);
 }
 
 async fn cache_fetch(url: &str, filename: &str, cache: bool) -> String {
