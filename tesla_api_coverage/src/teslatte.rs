@@ -34,9 +34,9 @@ pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
     for file in glob::glob(pattern).unwrap() {
         let path = file?;
 
-        if !path.ends_with("src/vehicles.rs") {
-            continue;
-        }
+        // if !path.ends_with("src/vehicles.rs") {
+        //     continue;
+        // }
 
         parse_file(&path)?;
     }
@@ -91,7 +91,7 @@ fn parse_file(path: &PathBuf) -> anyhow::Result<()> {
         }
 
         trace!("Looking at line: {line:?}");
-        let (_, maybe_endpoint) = opt(alt((get, get_arg)))(line).unwrap();
+        let (_, maybe_endpoint) = opt(alt((get, get_arg, get_args)))(line).unwrap();
         if let Some(endpoint) = maybe_endpoint {
             endpoints.push(endpoint);
         }
@@ -174,6 +174,28 @@ fn get_arg(s: &str) -> IResult<&str, TeslatteEndpoint> {
     Ok((s, endpoint))
 }
 
+///     pub_get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);
+fn get_args(s: &str) -> IResult<&str, TeslatteEndpoint> {
+    let (s, fn_name) = alt((
+        macro_fn_name_then_comma("get_args!"),
+        macro_fn_name_then_comma("pub_get_args!"),
+    ))(s)?;
+    let (s, response_type) = struct_name(s)?;
+    let (s, ()) = comma(s)?;
+    let (s, uri) = quoted_string(s)?;
+    let (s, ()) = comma(s)?;
+    let (s, arg_type) = struct_name(s)?;
+    let (s, _) = end_args(s)?;
+
+    let endpoint = TeslatteEndpoint {
+        method: Method::GET,
+        endpoint: fn_name.to_string(),
+        uri: uri.to_string(),
+    };
+
+    Ok((s, endpoint))
+}
+
 fn function_name(s: &str) -> IResult<&str, &str> {
     take_while1(is_function_chars)(s)
 }
@@ -239,5 +261,27 @@ mod tests {
         let s =
             r#"pub_get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);"#;
         let (_, endpoint) = get_arg(s).unwrap();
+    }
+
+    #[test]
+    fn test_get_args() {
+        let s = r#"get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);"#;
+        let (_, endpoint) = get_args(s).unwrap();
+    }
+
+    #[test]
+    fn test_pub_get_args() {
+        let s = r#"pub_get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);"#;
+        let (_, endpoint) = get_args(s).unwrap();
+    }
+
+    #[test]
+    fn test_post_arg() {
+        todo!()
+    }
+
+    #[test]
+    fn test_post_arg_empty() {
+        todo!()
     }
 }

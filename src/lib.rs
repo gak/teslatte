@@ -147,7 +147,7 @@ pub struct OwnerApi {
 
 impl OwnerApi {
     pub fn new(access_token: AccessToken, refresh_token: Option<RefreshToken>) -> Self {
-        OwnerApi {
+        Self {
             access_token,
             refresh_token,
             print_responses: PrintResponses::No,
