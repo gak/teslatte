@@ -22,26 +22,22 @@ pub struct TeslatteEndpoint {
 }
 
 pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
-    // glob all .rs files from path
-
     let mut path = PathBuf::from(path);
     path.push("src");
     path.push("**/*.rs");
 
     debug!("Globbing {path:?}");
 
+    let mut endpoints = vec![];
     let pattern = path.to_str().unwrap();
     for file in glob::glob(pattern).unwrap() {
         let path = file?;
 
-        // if !path.ends_with("src/vehicles.rs") {
-        //     continue;
-        // }
-
-        parse_file(&path)?;
+        let append_endpoints = parse_file(&path)?;
+        endpoints.extend(append_endpoints);
     }
 
-    Ok(todo!())
+    Ok(endpoints)
 }
 
 /// Examples
@@ -58,8 +54,8 @@ pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
 ///     pub_get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);
 /// }
 ///
-fn parse_file(path: &PathBuf) -> anyhow::Result<()> {
-    info!("Parsing file: {path:?}");
+fn parse_file(path: &PathBuf) -> anyhow::Result<Vec<TeslatteEndpoint>> {
+    debug!("Parsing file: {path:?}");
     let content = read_to_string(path)?;
 
     let mut endpoints = vec![];
@@ -91,31 +87,19 @@ fn parse_file(path: &PathBuf) -> anyhow::Result<()> {
         }
 
         trace!("Looking at line: {line:?}");
-        let (_, maybe_endpoint) = opt(alt((get, get_arg, get_args)))(line).unwrap();
+        let (_, maybe_endpoint) =
+            opt(alt((get, get_arg, get_args, post_arg, post_arg_empty)))(line).unwrap();
         if let Some(endpoint) = maybe_endpoint {
             endpoints.push(endpoint);
         }
     }
 
-    dbg!(endpoints);
-
-    Ok(())
+    Ok(endpoints)
 }
 
 fn is_owner_api_start(line: &str) -> bool {
     line.ends_with("OwnerApi {")
 }
-
-// fn common_macro_with_comma<'a>(expected_tag: &str, s: &'a str) -> IResult<&'a str, &'a str> {
-//     short_trace("common macro", s);
-//     let (s, _) = ignore_whitespace(s)?;
-//     let (s, _) = tag(expected_tag)(s)?;
-//     let (s, _) = tag("(")(s)?;
-//     let (s, fn_name) = function_name(s)?;
-//     let (s, ()) = comma(s)?;
-//
-//     Ok((s, fn_name))
-// }
 
 fn macro_fn_name_then_comma(expected_tag: &str) -> impl Fn(&str) -> IResult<&str, &str> + '_ {
     return move |s: &str| -> IResult<&str, &str> {
@@ -130,8 +114,8 @@ fn macro_fn_name_then_comma(expected_tag: &str) -> impl Fn(&str) -> IResult<&str
     };
 }
 
-///     get!(vehicles, Vec<Vehicle>, "/vehicles");
-///     pub_get!(vehicles, Vec<Vehicle>, "/vehicles");
+// get!(vehicles, Vec<Vehicle>, "/vehicles");
+// pub_get!(vehicles, Vec<Vehicle>, "/vehicles");
 fn get(s: &str) -> IResult<&str, TeslatteEndpoint> {
     let (s, fn_name) = alt((
         macro_fn_name_then_comma("get!"),
@@ -152,7 +136,7 @@ fn get(s: &str) -> IResult<&str, TeslatteEndpoint> {
     Ok((s, endpoint))
 }
 
-/// get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
+// get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
 fn get_arg(s: &str) -> IResult<&str, TeslatteEndpoint> {
     let (s, fn_name) = alt((
         macro_fn_name_then_comma("get_arg!"),
@@ -174,7 +158,7 @@ fn get_arg(s: &str) -> IResult<&str, TeslatteEndpoint> {
     Ok((s, endpoint))
 }
 
-///     pub_get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);
+// pub_get_args!(powerwall_energy_history, PowerwallEnergyHistory, "/powerwalls/{}/energyhistory", PowerwallEnergyHistoryValues);
 fn get_args(s: &str) -> IResult<&str, TeslatteEndpoint> {
     let (s, fn_name) = alt((
         macro_fn_name_then_comma("get_args!"),
@@ -189,6 +173,49 @@ fn get_args(s: &str) -> IResult<&str, TeslatteEndpoint> {
 
     let endpoint = TeslatteEndpoint {
         method: Method::GET,
+        endpoint: fn_name.to_string(),
+        uri: uri.to_string(),
+    };
+
+    Ok((s, endpoint))
+}
+
+// post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", VehicleId);
+fn post_arg(s: &str) -> IResult<&str, TeslatteEndpoint> {
+    let (s, fn_name) = alt((
+        macro_fn_name_then_comma("post_arg!"),
+        macro_fn_name_then_comma("pub_post_arg!"),
+    ))(s)?;
+    let (s, response_type) = struct_name(s)?;
+    let (s, ()) = comma(s)?;
+    let (s, uri) = quoted_string(s)?;
+    let (s, ()) = comma(s)?;
+    let (s, arg_type) = struct_name(s)?;
+    let (s, _) = end_args(s)?;
+
+    let endpoint = TeslatteEndpoint {
+        method: Method::POST,
+        endpoint: fn_name.to_string(),
+        uri: uri.to_string(),
+    };
+
+    Ok((s, endpoint))
+}
+
+// post_arg_empty!(charge_port_door_open, "/vehicles/{}/command/charge_port_door_open", VehicleId);
+// post_arg_empty!(charge_port_door_close, "/vehicles/{}/command/charge_port_door_close", VehicleId);
+fn post_arg_empty(s: &str) -> IResult<&str, TeslatteEndpoint> {
+    let (s, fn_name) = alt((
+        macro_fn_name_then_comma("post_arg_empty!"),
+        macro_fn_name_then_comma("pub_post_arg_empty!"),
+    ))(s)?;
+    let (s, uri) = quoted_string(s)?;
+    let (s, ()) = comma(s)?;
+    let (s, arg_type) = struct_name(s)?;
+    let (s, _) = end_args(s)?;
+
+    let endpoint = TeslatteEndpoint {
+        method: Method::POST,
         endpoint: fn_name.to_string(),
         uri: uri.to_string(),
     };
@@ -275,13 +302,16 @@ mod tests {
         let (_, endpoint) = get_args(s).unwrap();
     }
 
+    // post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", VehicleId);
     #[test]
     fn test_post_arg() {
-        todo!()
+        let s = r#"post_arg!(set_charge_limit, SetChargeLimit, "/vehicles/{}/command/set_charge_limit", VehicleId);"#;
+        let (_, endpoint) = post_arg(s).unwrap();
     }
 
     #[test]
     fn test_post_arg_empty() {
-        todo!()
+        let s = r#"post_arg_empty!(wake_up, "/vehicles/{}/command/wake_up", VehicleId);"#;
+        let (_, endpoint) = post_arg_empty(s).unwrap();
     }
 }
