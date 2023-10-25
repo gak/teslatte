@@ -13,17 +13,23 @@
 
 Teslatte is both a CLI and a Rust crate for interacting with the Tesla API.
 
-A Tesla API using the `owner-api.teslamotors.com` endpoint as well as parts of the OAuth flow.
+It is fairly trivial to add in new endpoints if you feel like creating a PR, but please:
+* Write some unit tests if it relies on new or changed data structures.
+* Let me know if your PR is a massive change before spending a lot of time on it.
 
-Currently, it only supports some the API.
+## APIs implemented
 
-It is fairly trivial to add in new endpoints if you feel like creating a PR. Please let me know if your PR is a massive change before spending a lot of time on it.
+Only the Owner API is partially supported by this crate, with plans to support the Fleet API and the Command Mode SDK.
+
+[`API.md`](API.md) contains a table of all known Tesla APIs (official and unofficial) and if Teslatte supports it, and where the API details were scraped from.
 
 ## References
 
 Thanks to https://tesla-api.timdorr.com/ for their excellent reference.
 
-Tesla API recently released [API documentation for their "Fleet API"](https://developer.tesla.com/docs/fleet-api) which appears to be similar to the Tesla Owner API.
+Tesla recently released [API documentation for their "Fleet API"](https://developer.tesla.com/docs/fleet-api) which appears to be similar to the Tesla Owner API.
+
+Tesla also recently released a [Command Mode SDK](https://github.com/teslamotors/vehicle-command/) which also includes a proxy for the Fleet API.
 
 ## CLI
 

@@ -1,7 +1,3 @@
-use crate::fleet::FleetEndpoint;
-use crate::teslatte::TeslatteEndpoint;
-use crate::timdorr::TimdorrEndpoint;
-use crate::vehicle_command::VehicleCommandEndpoint;
 use crate::Endpoint;
 use std::collections::HashMap;
 use std::fs::File;
@@ -29,7 +25,7 @@ pub fn generate(merged: &HashMap<String, Endpoint>) -> anyhow::Result<()> {
     let after = parts.next().unwrap();
 
     let mut table = vec![];
-    table.push("| API | Owners API (timdorr) | Fleet API | Command Mode |".to_string());
+    table.push("| API | Owners API | Fleet API | Command Mode |".to_string());
     table.push("| --- | --- | --- | --- |".to_string());
 
     // Sort by URL for into a Vec for now. Keep the key.
@@ -45,19 +41,19 @@ pub fn generate(merged: &HashMap<String, Endpoint>) -> anyhow::Result<()> {
         } else if endpoint.timdorr.is_some() {
             row.push("🔴".to_string());
         } else {
-            row.push("".to_string());
+            row.push("➖".to_string());
         }
 
         if endpoint.fleet.is_some() {
             row.push("🔴".to_string());
         } else {
-            row.push("".to_string());
+            row.push("➖".to_string());
         }
 
         if endpoint.vehicle_command.is_some() {
             row.push("🔴".to_string());
         } else {
-            row.push("".to_string());
+            row.push("➖".to_string());
         }
 
         table.push(format!("| {} |", row.join(" | ")));
@@ -66,7 +62,7 @@ pub fn generate(merged: &HashMap<String, Endpoint>) -> anyhow::Result<()> {
     let table = table.join("\n");
 
     // Now join them together and write the whole file back.
-    let contents = format!("{before}\n{START}\n{table}\n{END}\n{after}");
+    let contents = format!("{before}{START}\n{table}\n{END}{after}");
     let mut file = File::create(&path)?;
     file.write_all(contents.as_bytes())?;
 
