@@ -57,7 +57,7 @@ async fn main() {
     let teslatte_endpoints = teslatte::parse(&teslatte_project_path).unwrap();
 
     let mut fleet_endpoints = fleet::parse(&fleet_html);
-    let command_endpoints = vehicle_command::parse(&command_golang);
+    let mut command_endpoints = vehicle_command::parse(&command_golang);
     let mut timdorr_endpoints = timdorr::parse(&timdorr);
 
     info!("TOTALS: (before filtering and merging)");
@@ -73,6 +73,8 @@ async fn main() {
     rename_keys_based_on_uri(&teslatte_endpoints, &mut fleet_endpoints);
     info!("-- rename timdorr based on fleet");
     rename_keys_based_on_uri(&fleet_endpoints, &mut timdorr_endpoints);
+    info!("-- rename vehicle command");
+    rename_vehicle_command(&mut command_endpoints);
 
     let mut merged = merge(
         teslatte_endpoints,
@@ -87,7 +89,16 @@ async fn main() {
 
     dbg!(&merged);
 
-    todo!();
+    api_md::generate(&merged).unwrap();
+}
+
+fn rename_vehicle_command(endpoints: &mut HashMap<String, VehicleCommandEndpoint>) {
+    let mut renames = vec![("software-update-cancel", "cancel-software-update")];
+
+    for (old_key, new_key) in renames {
+        let endpoint = endpoints.remove(old_key).unwrap();
+        endpoints.insert(new_key.to_string(), endpoint);
+    }
 }
 
 fn rename_keys_based_on_uri(
@@ -155,9 +166,13 @@ pub fn remove_unwanted_endpoints(mut endpoints: &mut HashMap<String, Endpoint>) 
             return true;
         };
         let uri = &timdorr.uri;
-        !uri.starts_with("/api/1/directives")
+        true // rustfmt hax :)
+            && !uri.starts_with("/commerce-api")
+            && !uri.starts_with("/api/1/directives")
             && !uri.starts_with("/api/1/subscriptions")
             && !uri.starts_with("/api/1/dx/")
+            && !uri.starts_with("/mobile-app")
+            && !uri.starts_with("/bff/mobile-app")
             && !uri.starts_with("/bff/v2/mobile-app")
     });
 }
