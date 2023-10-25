@@ -1,4 +1,6 @@
+use crate::Restful;
 use heck::ToKebabCase;
+use reqwest::Method;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -9,6 +11,22 @@ pub struct TimdorrEndpoint {
     pub method: String,
     pub uri: String,
     pub auth: bool,
+}
+
+impl Restful for TimdorrEndpoint {
+    fn method(&self) -> &Method {
+        match self.method.as_str() {
+            "GET" => &Method::GET,
+            "POST" => &Method::POST,
+            "PUT" => &Method::PUT,
+            "DELETE" => &Method::DELETE,
+            _ => panic!("Unknown method {}", self.method),
+        }
+    }
+
+    fn uri(&self) -> &str {
+        &self.uri
+    }
 }
 
 pub fn parse(json_str: &str) -> HashMap<String, TimdorrEndpoint> {

@@ -1,12 +1,14 @@
 //! Parse the whole teslatte project and find any get*! post*! macros.
 
 use crate::nom_help::{ignore_whitespace, quoted_string, short_trace};
+use crate::Restful;
 use heck::ToKebabCase;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
 use nom::combinator::opt;
 use nom::IResult;
 use reqwest::Method;
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use tracing::{debug, trace};
@@ -20,7 +22,17 @@ pub struct TeslatteEndpoint {
     // pub post_struct: Option<String>,
 }
 
-pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
+impl Restful for TeslatteEndpoint {
+    fn method(&self) -> &Method {
+        &self.method
+    }
+
+    fn uri(&self) -> &str {
+        &self.uri
+    }
+}
+
+pub fn parse(path: &Path) -> anyhow::Result<HashMap<String, TeslatteEndpoint>> {
     let mut path = PathBuf::from(path);
     path.push("src");
     path.push("**");
@@ -40,7 +52,12 @@ pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
     // Change the name to be kebab-case.
     for endpoint in &mut endpoints {
         endpoint.name = endpoint.name.to_kebab_case();
+        // Insert "/api/1" at the beginning of the URI.
+        endpoint.uri = format!("/api/1{}", endpoint.uri);
     }
+
+    let endpoints: HashMap<String, TeslatteEndpoint> =
+        endpoints.into_iter().map(|e| (e.name.clone(), e)).collect();
 
     Ok(endpoints)
 }

@@ -10,6 +10,7 @@ use crate::teslatte::TeslatteEndpoint;
 use crate::timdorr::TimdorrEndpoint;
 use crate::vehicle_command::VehicleCommandEndpoint;
 use clap::Parser;
+use reqwest::Method;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -22,6 +23,15 @@ const VEHICLE_COMMAND_URL: &str = "https://raw.githubusercontent.com/teslamotors
 const VEHICLE_COMMAND_FILE: &str = "vehicle_command.go";
 const FLEET_API_URL: &str = "https://developer.tesla.com/docs/fleet-api";
 const FLEET_API_FILE: &str = "fleet.html";
+
+trait Restful {
+    fn method(&self) -> &Method;
+    fn uri(&self) -> &str;
+}
+
+trait EndpointGeneral {
+    fn name(&self) -> &str;
+}
 
 #[derive(Parser, Debug)]
 #[clap(author, version)]
@@ -45,19 +55,24 @@ async fn main() {
     let mut teslatte_project_path = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
     teslatte_project_path.push("..");
     let teslatte_endpoints = teslatte::parse(&teslatte_project_path).unwrap();
-    let teslatte_endpoints: HashMap<String, TeslatteEndpoint> = teslatte_endpoints
-        .into_iter()
-        .map(|e| (e.name.clone(), e))
-        .collect();
 
-    let fleet_endpoints = fleet::parse(&fleet_html);
+    let mut fleet_endpoints = fleet::parse(&fleet_html);
     let command_endpoints = vehicle_command::parse(&command_golang);
-    let timdorr_endpoints = timdorr::parse(&timdorr);
+    let mut timdorr_endpoints = timdorr::parse(&timdorr);
 
+    info!("TOTALS: (before filtering and merging)");
     info!("{} endpoints in teslatte", teslatte_endpoints.len());
     info!("{} endpoints in fleet", fleet_endpoints.len());
     info!("{} endpoints in command", command_endpoints.len());
     info!("{} endpoints in timdorr", timdorr_endpoints.len());
+
+    // Before we merge let's mangle the names so the URI's match.
+    info!("-- rename timdorr based on teslatte");
+    rename_keys_based_on_uri(&teslatte_endpoints, &mut timdorr_endpoints);
+    info!("-- rename fleet based on teslatte");
+    rename_keys_based_on_uri(&teslatte_endpoints, &mut fleet_endpoints);
+    info!("-- rename timdorr based on fleet");
+    rename_keys_based_on_uri(&fleet_endpoints, &mut timdorr_endpoints);
 
     let mut merged = merge(
         teslatte_endpoints,
@@ -67,10 +82,56 @@ async fn main() {
     )
     .unwrap();
 
+    remove_unwanted_endpoints(&mut merged);
+    ensure_timdorr_matches_fleet(&merged);
+
+    dbg!(&merged);
+
+    todo!();
+}
+
+fn rename_keys_based_on_uri(
+    base: &HashMap<String, impl Restful>,
+    mut to_rename: &mut HashMap<String, impl Restful>,
+) {
+    let mut renames = vec![];
+    for (base_key, base_endpoint) in base.iter() {
+        let mut seen = false;
+        for (rename_key, rename_endpoint) in to_rename.iter() {
+            if base_endpoint.uri() != rename_endpoint.uri() {
+                continue;
+            }
+            if base_endpoint.method() != rename_endpoint.method() {
+                continue;
+            }
+            if base_key == rename_key {
+                continue;
+            }
+
+            info!(
+                "Rename {rename_key} -> {base_key} for {}",
+                base_endpoint.uri()
+            );
+            if seen {
+                panic!("Duplicate rename for {base_key} -> {rename_key}");
+            }
+
+            renames.push((base_key.to_string(), rename_key.to_string()));
+            seen = true;
+        }
+    }
+
+    for (base_key, rename_key) in renames {
+        let endpoint = to_rename.remove(&rename_key).unwrap();
+        to_rename.insert(base_key.to_string(), endpoint);
+    }
+}
+
+fn ensure_timdorr_matches_fleet(merged: &HashMap<String, Endpoint>) {
     // Let's do a check to see if the fleet api matches the timdorr api.
     // If it doesn't, let's panic!
     let mut perfect = true;
-    for (k, v) in &merged {
+    for (k, v) in merged {
         if let Some(fleet) = &v.fleet {
             if let Some(timdorr) = &v.timdorr {
                 if fleet.uri != timdorr.uri {
@@ -80,26 +141,26 @@ async fn main() {
             }
         }
     }
-
     if !perfect {
         panic!("Fleet and Timdorr don't match. See errors above.");
     }
-
-    // filter_interesting_endpoints(&mut merged);
-    todo!();
-
-    dbg!(&merged);
 }
 
 /// Remove endpoints that we're not interested in (yet) in place.
-// pub fn filter_interesting_endpoints(mut endpoints: &mut HashMap<String, Endpoint>) {
-//     endpoints.retain(|_, e| {
-//         !e. starts_with("/api/1/directives")
-//             && !e.starts_with("/api/1/subscriptions")
-//             && !e.starts_with("/api/1/dx/")
-//             && !e.starts_with("/bff/v2/mobile-app")
-//     });
-// }
+///
+/// Base it on timdorr's list.
+pub fn remove_unwanted_endpoints(mut endpoints: &mut HashMap<String, Endpoint>) {
+    endpoints.retain(|_, e| {
+        let Some(timdorr) = &e.timdorr else {
+            return true;
+        };
+        let uri = &timdorr.uri;
+        !uri.starts_with("/api/1/directives")
+            && !uri.starts_with("/api/1/subscriptions")
+            && !uri.starts_with("/api/1/dx/")
+            && !uri.starts_with("/bff/v2/mobile-app")
+    });
+}
 
 #[derive(Debug)]
 pub struct Endpoint {

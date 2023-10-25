@@ -1,4 +1,6 @@
+use crate::Restful;
 use heck::ToKebabCase;
+use reqwest::Method;
 use scraper::{Element, ElementRef, Html, Selector};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -69,7 +71,7 @@ pub struct Parameter {
 #[derive(Debug, Clone)]
 pub struct FleetEndpoint {
     pub name: String,
-    pub method: reqwest::Method,
+    pub method: Method,
     pub uri: String,
     // description: String,
     // category: Category,
@@ -77,6 +79,16 @@ pub struct FleetEndpoint {
     // parameters: Vec<Parameter>,
     // request_example: String,
     // response_example: String,
+}
+
+impl Restful for FleetEndpoint {
+    fn method(&self) -> &Method {
+        &self.method
+    }
+
+    fn uri(&self) -> &str {
+        &self.uri
+    }
 }
 
 pub fn parse(html: &str) -> HashMap<String, FleetEndpoint> {
