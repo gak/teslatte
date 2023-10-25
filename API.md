@@ -11,6 +11,10 @@ List of all known Tesla APIs, and if this crate supports it, and which of the Te
 
 Currently only the Owner API is partially supported by this crate.
 
-| API       | Owner API | Fleet API | Command Mode |
-|-----------| --- | --- | --- |
-| honk_horn | ✅ |  |  | 
+<!-- tesla_api_coverage start table -->
+
+| API | Owner API | Fleet API | Command Mode |
+| --- | --- | --- | --- |
+| honk_horn   | ✅         |           |  | 
+
+<!-- tesla_api_coverage end table -->

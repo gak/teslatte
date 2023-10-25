@@ -30,7 +30,7 @@ pub fn seek_to_map(s: &str) -> IResult<&str, ()> {
     Ok((s, ()))
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VehicleCommandEndpoint {
     pub endpoint: String,
     pub help: String,

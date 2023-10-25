@@ -66,11 +66,11 @@ pub struct Parameter {
     description: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FleetEndpoint {
-    name: String,
-    method: reqwest::Method,
-    url_definition: String,
+    pub name: String,
+    pub method: reqwest::Method,
+    pub uri: String,
     // description: String,
     // category: Category,
     // scopes: Vec<Scope>,
@@ -109,10 +109,19 @@ pub fn parse(html: &str) -> HashMap<String, FleetEndpoint> {
         }
 
         let Some(next_element) = element.next_sibling_element() else {
-            return map;
+            break;
         };
         element = next_element;
     }
+
+    // Replace all vehicles/{id}/ to use {vehicle_id}
+    for (name, endpoint) in &mut map {
+        endpoint.uri = endpoint
+            .uri
+            .replace("vehicles/{id}/", "vehicles/{vehicle_id}/");
+    }
+
+    return map;
 }
 
 /// Return None if this is not an endpoint.
@@ -166,7 +175,7 @@ fn parse_call(element: ElementRef) -> Option<FleetEndpoint> {
     Some(FleetEndpoint {
         name: name.to_string(),
         method: reqwest::Method::from_bytes(method.as_bytes()).unwrap(),
-        url_definition: url.to_string(),
+        uri: url.to_string(),
     })
 }
 

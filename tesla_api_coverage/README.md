@@ -14,6 +14,11 @@ This project does (or will do) the following:
   * Has a configuration on how to merge the endpoints, e.g. if an endpoint name is different, how to resolve it.
 * Output a table of endpoints that are implemented or not, maybe in Markdown.
  
+### API.md output
+
+* Update API.md in the root.
+* Look for `<!-- tesla_api_coverage start table -->` and `<!-- tesla_api_coverage end table -->` and generate the table in between.
+* Use timdorr's API as the source of truth for the list of endpoints because it is the oldest and longest!
 
 ### Brainstorm
 

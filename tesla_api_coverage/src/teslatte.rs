@@ -1,21 +1,20 @@
 //! Parse the whole teslatte project and find any get*! post*! macros.
 
 use crate::nom_help::{ignore_whitespace, quoted_string, short_trace};
+use heck::ToKebabCase;
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_till1, take_until1, take_while1};
-use nom::character::complete::alpha1;
-use nom::character::is_alphabetic;
+use nom::bytes::complete::{tag, take_while1};
 use nom::combinator::opt;
-use nom::{IResult, Needed};
+use nom::IResult;
 use reqwest::Method;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
-use tracing::{debug, info, trace};
+use tracing::{debug, trace};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TeslatteEndpoint {
     pub method: Method,
-    pub endpoint: String,
+    pub name: String,
     pub uri: String,
     // pub args: Vec<String>,
     // pub post_struct: Option<String>,
@@ -24,7 +23,8 @@ pub struct TeslatteEndpoint {
 pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
     let mut path = PathBuf::from(path);
     path.push("src");
-    path.push("**/*.rs");
+    path.push("**");
+    path.push("*.rs");
 
     debug!("Globbing {path:?}");
 
@@ -35,6 +35,11 @@ pub fn parse(path: &Path) -> anyhow::Result<Vec<TeslatteEndpoint>> {
 
         let append_endpoints = parse_file(&path)?;
         endpoints.extend(append_endpoints);
+    }
+
+    // Change the name to be kebab-case.
+    for endpoint in &mut endpoints {
+        endpoint.name = endpoint.name.to_kebab_case();
     }
 
     Ok(endpoints)
@@ -129,7 +134,7 @@ fn get(s: &str) -> IResult<&str, TeslatteEndpoint> {
 
     let endpoint = TeslatteEndpoint {
         method: Method::GET,
-        endpoint: fn_name.to_string(),
+        name: fn_name.to_string(),
         uri: uri.to_string(),
     };
 
@@ -151,7 +156,7 @@ fn get_arg(s: &str) -> IResult<&str, TeslatteEndpoint> {
 
     let endpoint = TeslatteEndpoint {
         method: Method::GET,
-        endpoint: fn_name.to_string(),
+        name: fn_name.to_string(),
         uri: uri.to_string(),
     };
 
@@ -173,7 +178,7 @@ fn get_args(s: &str) -> IResult<&str, TeslatteEndpoint> {
 
     let endpoint = TeslatteEndpoint {
         method: Method::GET,
-        endpoint: fn_name.to_string(),
+        name: fn_name.to_string(),
         uri: uri.to_string(),
     };
 
@@ -195,7 +200,7 @@ fn post_arg(s: &str) -> IResult<&str, TeslatteEndpoint> {
 
     let endpoint = TeslatteEndpoint {
         method: Method::POST,
-        endpoint: fn_name.to_string(),
+        name: fn_name.to_string(),
         uri: uri.to_string(),
     };
 
@@ -216,7 +221,7 @@ fn post_arg_empty(s: &str) -> IResult<&str, TeslatteEndpoint> {
 
     let endpoint = TeslatteEndpoint {
         method: Method::POST,
-        endpoint: fn_name.to_string(),
+        name: fn_name.to_string(),
         uri: uri.to_string(),
     };
 
