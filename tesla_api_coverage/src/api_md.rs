@@ -29,8 +29,8 @@ pub fn generate(merged: &HashMap<String, Endpoint>) -> anyhow::Result<()> {
     let after = parts.next().unwrap();
 
     let mut table = vec![];
-    table.push("| API | Teslatte | Timdorr API | Fleet API | Command Mode |".to_string());
-    table.push("| --- | --- | --- | --- | --- |".to_string());
+    table.push("| API | Owners API (timdorr) | Fleet API | Command Mode |".to_string());
+    table.push("| --- | --- | --- | --- |".to_string());
 
     // Sort by URL for into a Vec for now. Keep the key.
     let mut endpoints = merged.iter().collect::<Vec<(&String, &Endpoint)>>();
@@ -40,26 +40,22 @@ pub fn generate(merged: &HashMap<String, Endpoint>) -> anyhow::Result<()> {
         let mut row = vec![];
         row.push(format!("{}", name));
 
-        if endpoint.teslatte.is_some() {
+        if endpoint.teslatte_owners_api.is_some() {
             row.push("✅".to_string());
-        } else {
-            row.push("".to_string());
-        }
-
-        if endpoint.timdorr.is_some() {
-            row.push("🟢".to_string());
+        } else if endpoint.timdorr.is_some() {
+            row.push("🔴".to_string());
         } else {
             row.push("".to_string());
         }
 
         if endpoint.fleet.is_some() {
-            row.push("🟢".to_string());
+            row.push("🔴".to_string());
         } else {
             row.push("".to_string());
         }
 
         if endpoint.vehicle_command.is_some() {
-            row.push("🟢".to_string());
+            row.push("🔴".to_string());
         } else {
             row.push("".to_string());
         }

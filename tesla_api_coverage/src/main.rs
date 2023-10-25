@@ -93,7 +93,17 @@ async fn main() {
 }
 
 fn rename_vehicle_command(endpoints: &mut HashMap<String, VehicleCommandEndpoint>) {
-    let mut renames = vec![("software-update-cancel", "cancel-software-update")];
+    let mut renames = vec![
+        ("auto-seat-and-climate", "auto-conditioning-start"),
+        ("charging-set-limit", "set-charge-limit"),
+        ("charging-start", "charge-start"),
+        ("charging-stop", "charge-stop"),
+        ("charge-port-open", "charge-port-door-open"),
+        ("charge-port-close", "charge-port-door-close"),
+        ("honk", "honk-horn"),
+        ("software-update-cancel", "cancel-software-update"),
+        ("wake", "wake-up"),
+    ];
 
     for (old_key, new_key) in renames {
         let endpoint = endpoints.remove(old_key).unwrap();
@@ -153,7 +163,7 @@ fn ensure_timdorr_matches_fleet(merged: &HashMap<String, Endpoint>) {
         }
     }
     if !perfect {
-        panic!("Fleet and Timdorr don't match. See errors above.");
+        panic!("Fleet and timdorr don't match. See errors above.");
     }
 }
 
@@ -180,7 +190,7 @@ pub fn remove_unwanted_endpoints(mut endpoints: &mut HashMap<String, Endpoint>) 
 #[derive(Debug)]
 pub struct Endpoint {
     pub name: String,
-    pub teslatte: Option<TeslatteEndpoint>,
+    pub teslatte_owners_api: Option<TeslatteEndpoint>,
     pub fleet: Option<FleetEndpoint>,
     pub vehicle_command: Option<VehicleCommandEndpoint>,
     pub timdorr: Option<TimdorrEndpoint>,
@@ -213,7 +223,7 @@ pub fn merge(
 
         let endpoint = Endpoint {
             name,
-            teslatte,
+            teslatte_owners_api: teslatte,
             fleet,
             vehicle_command,
             timdorr,
