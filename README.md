@@ -2,6 +2,7 @@
 
 <a href="https://crates.io/crates/teslatte">![Crates.io](https://img.shields.io/crates/v/teslatte?style=for-the-badge&color=c02020)</a>
 <a href="https://docs.rs/teslatte">![docs.rs](https://img.shields.io/docsrs/teslatte?style=for-the-badge)</a>
+<a href="https://">![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/gak/teslatte/rust.yml?style=for-the-badge)</a>
 <a href="https://github.com/gak/teslatte#license">![MIT or Apache-2.0](https://img.shields.io/crates/l/teslatte?style=for-the-badge)</a>
 
 > #### ⚠️ Alpha Warning! ⚠️
