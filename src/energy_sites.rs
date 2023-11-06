@@ -12,7 +12,7 @@ impl OwnerApi {
     pub_get_args!(energy_sites_calendar_history, CalendarHistory, "/energy_sites/{}/calendar_history", CalendarHistoryValues);
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct SiteStatus {
     pub backup_capable: bool,
     pub battery_power: i64,
@@ -32,7 +32,7 @@ pub struct SiteStatus {
     pub total_pack_energy: i64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct LiveStatus {
     pub backup_capable: bool,
     pub battery_power: i64,
@@ -49,10 +49,31 @@ pub struct LiveStatus {
     pub storm_mode_active: bool,
     pub timestamp: String,
     pub total_pack_energy: i64,
-    pub wall_connectors: Vec<()>, // TODO: gak: This is empty so I don't know what it looks like.
+    pub wall_connectors: Vec<LiveWallConnector>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct WallConnector {
+    pub device_id: String,
+    pub din: String,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct LiveWallConnector {
+    /// VIN of the car when connected to the wall connector.
+    pub vin: Option<String>,
+    pub din: String,
+
+    /// Observed:
+    /// 2: not plugged in
+    /// 4: plugged in (not charging)
+    pub wall_connector_state: i64,
+    pub wall_connector_power: i64,
+    pub wall_connector_fault_state: i64,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct UserSettings {
     pub breaker_alert_enabled: bool,
     pub powerwall_onboarding_settings_set: bool,
@@ -61,7 +82,7 @@ pub struct UserSettings {
     pub sync_grid_alert_enabled: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Schedule {
     pub end_seconds: i64,
     pub start_seconds: i64,
@@ -69,20 +90,20 @@ pub struct Schedule {
     pub week_days: Vec<i64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct TouSettings {
     pub optimization_strategy: String,
     pub schedule: Vec<Schedule>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Geolocation {
     pub latitude: f64,
     pub longitude: f64,
     pub source: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Components {
     pub backup: bool,
     pub backup_time_remaining_enabled: bool,
@@ -115,7 +136,7 @@ pub struct Components {
     pub wifi_commissioning_enabled: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Address {
     pub address_line1: String,
     pub city: String,
@@ -124,7 +145,7 @@ pub struct Address {
     pub zip: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct SiteInfo {
     pub address: Address,
     pub backup_reserve_percent: i64,
@@ -192,7 +213,7 @@ impl Values for CalendarHistoryValues {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct CalendarHistory {
     pub serial_number: String,
     /// Only appears in energy kind.
@@ -202,14 +223,14 @@ pub struct CalendarHistory {
     pub time_series: Option<Vec<Series>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum Series {
     Power(PowerSeries),
     Energy(EnergySeries),
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct PowerSeries {
     pub timestamp: DateTime<FixedOffset>,
     pub solar_power: f64,
@@ -219,7 +240,7 @@ pub struct PowerSeries {
     pub generator_power: f64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct EnergySeries {
     pub timestamp: DateTime<FixedOffset>,
     pub solar_energy_exported: f64,
@@ -238,4 +259,86 @@ pub struct EnergySeries {
     pub consumer_energy_imported_from_solar: f64,
     pub consumer_energy_imported_from_battery: f64,
     pub consumer_energy_imported_from_generator: f64,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::energy_sites::{LiveStatus, LiveWallConnector, WallConnector};
+    use crate::products::Product;
+    use crate::{OwnerApi, PrintResponses, RequestData};
+
+    #[test]
+    fn json_energy_sites_gak_2023_11_06() {
+        let s = include_str!("../testdata/energy_sites_gak_2023_11_06.json");
+
+        let request_data = RequestData::Get { url: "" };
+        let products = OwnerApi::parse_json::<Vec<Product>>(
+            &request_data,
+            s.to_string(),
+            PrintResponses::Pretty,
+        )
+        .unwrap();
+
+        let Product::Powerwall(powerwall) = &products[1] else {
+            panic!("Expected Powerwall product");
+        };
+        assert_eq!(
+            powerwall.components.wall_connectors[0],
+            WallConnector {
+                device_id: "uuid".to_string(),
+                din: "12345".to_string(),
+                is_active: true,
+            }
+        )
+    }
+
+    #[test]
+    fn json_energy_sites_live_power_gak_2023_11_06() {
+        let s = include_str!("../testdata/energy_sites_live_status_gak_plugged_in_2023_11_06.json");
+
+        let request_data = RequestData::Get { url: "" };
+        let live_status = OwnerApi::parse_json::<LiveStatus>(
+            &request_data,
+            s.to_string(),
+            PrintResponses::Pretty,
+        )
+        .unwrap();
+
+        let wall_connector = live_status.wall_connectors.first().unwrap();
+        assert_eq!(
+            wall_connector,
+            &LiveWallConnector {
+                vin: Some("1234".to_string()),
+                din: "5432".to_string(),
+                wall_connector_state: 4,
+                wall_connector_power: 0,
+                wall_connector_fault_state: 2,
+            }
+        );
+    }
+
+    #[test]
+    fn json_energy_sites_live_power_unplugged_charger_gak_2023_11_06() {
+        let s = include_str!("../testdata/energy_sites_live_status_gak_unplugged_2023_11_06.json");
+
+        let request_data = RequestData::Get { url: "" };
+        let live_status = OwnerApi::parse_json::<LiveStatus>(
+            &request_data,
+            s.to_string(),
+            PrintResponses::Pretty,
+        )
+        .unwrap();
+
+        let wall_connector = live_status.wall_connectors.first().unwrap();
+        assert_eq!(
+            wall_connector,
+            &LiveWallConnector {
+                vin: None,
+                din: "1234".to_string(),
+                wall_connector_state: 2,
+                wall_connector_power: 0,
+                wall_connector_fault_state: 2,
+            }
+        );
+    }
 }

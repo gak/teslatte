@@ -1,3 +1,4 @@
+use crate::energy_sites::WallConnector;
 use crate::error::TeslatteError;
 use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
@@ -79,6 +80,8 @@ pub struct Components {
     pub grid: bool,
     pub load_meter: bool,
     pub market_type: String,
+    #[serde(default)]
+    pub wall_connectors: Vec<WallConnector>,
 }
 
 #[cfg(test)]
