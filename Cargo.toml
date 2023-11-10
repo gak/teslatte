@@ -1,6 +1,6 @@
 [package]
 name = "teslatte"
-version = "0.1.9"
+version = "0.1.10"
 description = "A command line tool and Rust crate for querying the Tesla API."
 edition = "2021"
 rust-version = "1.75.0"
