@@ -72,6 +72,10 @@ pub struct VehicleData {
     pub gui_settings: Option<GuiSettings>,
     pub vehicle_config: Option<VehicleConfig>,
     pub vehicle_state: Option<VehicleState>,
+
+    pub cached_data: Option<String>,
+    pub command_signing: Option<String>,
+    pub release_notes_supported: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -171,23 +175,33 @@ pub struct ClimateState {
     pub supports_fan_only_cabin_overheat_protection: bool,
     pub timestamp: i64,
     pub wiper_blade_heater: bool,
+
+    pub auto_steering_wheel_heat: Option<bool>,
+    pub cop_activation_temperature: Option<String>,
+    pub steering_wheel_heat_level: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DriveState {
-    pub gps_as_of: i64,
-    pub heading: i64,
-    pub latitude: f64,
-    pub longitude: f64,
-    pub native_latitude: f64,
-    pub native_location_supported: i64,
-    pub native_longitude: f64,
-    pub native_type: String,
+    /// gak: The following fields (up to native_type) suddenly vanished from the API response so
+    /// I've made them all Option. Maybe API now only returns them when driving?
+    /// TODO: Check if they come back
+    pub gps_as_of: Option<i64>,
+    pub heading: Option<i64>,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+    pub native_latitude: Option<f64>,
+    pub native_location_supported: Option<i64>,
+    pub native_longitude: Option<f64>,
+    pub native_type: Option<String>,
+
     pub power: i64,
     pub shift_state: Option<String>,
     /// gak: I've assumed this to be String.
     pub speed: Option<String>,
     pub timestamp: i64,
+
+    pub active_route_traffic_minutes_delay: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -197,6 +211,7 @@ pub struct GuiSettings {
     pub gui_distance_units: String,
     pub gui_range_display: String,
     pub gui_temperature_units: String,
+    pub gui_tirepressure_units: Option<String>,
     pub show_range_units: bool,
     pub timestamp: i64,
 }
@@ -247,6 +262,9 @@ pub struct VehicleConfig {
     pub utc_offset: i64,
     pub webcam_supported: Option<bool>,
     pub wheel_type: String,
+
+    pub cop_user_set_temp_supported: Option<bool>,
+    pub webcam_selfie_supported: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -304,11 +322,37 @@ pub struct VehicleState {
     pub vehicle_self_test_progress: Option<i64>,
     pub vehicle_self_test_requested: Option<bool>,
     pub webcam_available: Option<bool>,
+
+    pub media_info: Option<MediaInfo>,
+    pub tpms_hard_warning_fl: Option<bool>,
+    pub tpms_hard_warning_fr: Option<bool>,
+    pub tpms_hard_warning_rl: Option<bool>,
+    pub tpms_hard_warning_rr: Option<bool>,
+
+    pub tpms_rcp_front_value: Option<f64>,
+    pub tpms_rcp_rear_value: Option<f64>,
+
+    pub tpms_last_seen_pressure_time_fl: Option<i64>,
+    pub tpms_last_seen_pressure_time_fr: Option<i64>,
+    pub tpms_last_seen_pressure_time_rl: Option<i64>,
+    pub tpms_last_seen_pressure_time_rr: Option<i64>,
+
+    pub tpms_soft_warning_fl: Option<bool>,
+    pub tpms_soft_warning_fr: Option<bool>,
+    pub tpms_soft_warning_rl: Option<bool>,
+    pub tpms_soft_warning_rr: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MediaState {
     pub remote_control_enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaInfo {
+    audio_volume: Option<f64>,
+    audio_volume_increment: Option<f64>,
+    audio_volume_max: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -766,6 +810,15 @@ mod tests {
         let request_data = RequestData::Get {
             url: "https://owner-api.teslamotors.com/api/1/vehicles/1234567890/vehicle_data",
         };
+        OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
+    }
+
+    #[test]
+    fn json_vehicle_data_gak_2023_11_11() {
+        let s = include_str!("../testdata/vehicle_data_gak_2023_11_11.json");
+
+        let request_data = RequestData::Get { url: "" };
         OwnerApi::parse_json::<VehicleData>(&request_data, s.to_string(), PrintResponses::Pretty)
             .unwrap();
     }
