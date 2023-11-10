@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2023-11-11
+
+### Changed
+
+- API changes for "api_version 67"
+  - VehicleData new fields:
+    - cached_data
+    - command_signing
+    - release_notes_supported
+
+  - ClimateState new fields:
+    - auto_steering_wheel_heat
+    - cop_activation_temperature,
+    - steering_wheel_heat_level
+
+  - DriveState now Optional:
+    - gps_as_of
+    - heading
+    - latitude
+    - longitude
+    - native_latitude
+    - native_location_supported
+    - native_longitude
+    - native_type
+
+  - DriveState new fields:
+    - active_route_traffic_minutes_delay
+
+  - GuiSettings new field:
+    - gui_tirepressure_units
+
+  - VehicleConfig new fields:
+    - cop_user_set_temp_supported
+    - webcam_selfie_supported
+
+  - VehicleState new fields:
+    - media_info: MediaInfo
+    - tpms_hard_warning_fl
+    - tpms_hard_warning_fr
+    - tpms_hard_warning_rl
+    - tpms_hard_warning_rr
+    - tpms_rcp_front_value
+    - tpms_rcp_rear_value
+    - tpms_last_seen_pressure_time_fl
+    - tpms_last_seen_pressure_time_fr
+    - tpms_last_seen_pressure_time_rl
+    - tpms_last_seen_pressure_time_rr
+    - tpms_soft_warning_fl
+    - tpms_soft_warning_fr
+    - tpms_soft_warning_rl
+    - tpms_soft_warning_rr
+
+  - MediaInfo new fields:
+    - audio_volume
+    - audio_volume_increment
+    - audio_volume_max
+
 ## [0.1.9] - 2023-11-06
 
 ### Added
