@@ -1,6 +1,6 @@
 use crate::energy_sites::{HistoryKind, HistoryPeriod};
 use crate::products::GatewayId;
-use crate::{join_query_pairs, pub_get_arg, pub_get_args, rfc3339, OwnerApi, Values};
+use crate::{join_query_pairs, pub_get_arg, pub_get_args, rfc3339, ApiValues, OwnerApi};
 use chrono::{DateTime, FixedOffset};
 use derive_more::{Display, FromStr};
 use serde::{Deserialize, Serialize};
@@ -33,7 +33,7 @@ pub struct PowerwallEnergyHistoryValues {
     pub end_date: Option<DateTime<FixedOffset>>,
 }
 
-impl Values for PowerwallEnergyHistoryValues {
+impl ApiValues for PowerwallEnergyHistoryValues {
     fn format(&self, url: &str) -> String {
         let url = url.replace("{}", &self.powerwall_id.0.to_string());
         let mut pairs: Vec<(&str, String)> = vec![

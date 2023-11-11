@@ -1,17 +1,19 @@
-/// Please note that many of these structs are generated from my own API call responses.
-///
-/// Sometimes the API will return a null for a field where I've put in a non Option type, which
-/// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
+use derive_more::{Deref, DerefMut, From};
+// Please note that many of these structs are generated from my own API call responses.
+//
+// Sometimes the API will return a null for a field where I've put in a non Option type, which
+// will cause the deserializer to fail. Please log an issue to fix these if you come across it.
 use crate::{
-    get, get_arg, post_arg, post_arg_empty, Empty, ExternalVehicleId, OwnerApi, VehicleApi,
-    VehicleId,
+    get, get_args, post_arg, post_arg_empty, ApiValues, Empty, ExternalVehicleId, OwnerApi,
+    VehicleApi, VehicleId,
 };
 use serde::{Deserialize, Serialize};
+use strum::{Display, EnumString};
 
 #[rustfmt::skip]
 impl VehicleApi for OwnerApi {
     get!(vehicles, Vec<Vehicle>, "/vehicles");
-    get_arg!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", VehicleId);
+    get_args!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", GetVehicleData);
     post_arg_empty!(wake_up, "/vehicles/{}/command/wake_up", VehicleId);
 
     // Alerts
@@ -39,6 +41,84 @@ impl VehicleApi for OwnerApi {
     post_arg_empty!(door_unlock, "/vehicles/{}/command/door_unlock", VehicleId);
     post_arg_empty!(door_lock, "/vehicles/{}/command/door_lock", VehicleId);
     post_arg_empty!(remote_start_drive, "/vehicles/{}/command/remote_start_drive", VehicleId);
+}
+
+#[derive(Debug, Clone, Display, EnumString)]
+#[strum(serialize_all = "snake_case")]
+pub enum Endpoint {
+    ChargeState,
+    ClimateState,
+    ClosuresState,
+    DriveState,
+    GuiSettings,
+    LocationData,
+    VehicleConfig,
+    VehicleState,
+    VehicleDataCombo,
+}
+
+#[derive(Debug, Clone, From, Deref, DerefMut)]
+#[cfg_attr(feature = "cli", derive(clap::Args))]
+pub struct Endpoints {
+    endpoints: Vec<Endpoint>,
+}
+
+pub struct GetVehicleData {
+    pub vehicle_id: VehicleId,
+
+    /// From https://developer.tesla.com/docs/fleet-api#vehicle_data
+    /// String of URL-encoded, semicolon-separated values. Can be many of 'charge_state',
+    /// 'climate_state', 'closures_state', 'drive_state', 'gui_settings', 'location_data',
+    /// 'vehicle_config', 'vehicle_state', 'vehicle_data_combo'.
+    pub endpoints: Endpoints,
+}
+
+impl GetVehicleData {
+    /// Create a new GetVehicleData request with no endpoints.
+    ///
+    /// ```rust
+    /// # use teslatte::VehicleId;
+    /// # use teslatte::vehicles::GetVehicleData;
+    /// let get_vehicle_data = GetVehicleData::new(123u64);
+    /// let get_vehicle_data = GetVehicleData::new(VehicleId::new(123u64));
+    /// ```
+    pub fn new(vehicle_id: impl Into<VehicleId>) -> Self {
+        Self::new_with_endpoints(vehicle_id, vec![])
+    }
+
+    /// Create a new GetVehicleData request with endpoints.
+    /// ```rust
+    /// # use teslatte::vehicles::{Endpoint, GetVehicleData};
+    /// let get_vehicle_data = GetVehicleData::new_with_endpoints(123u64, vec![Endpoint::ChargeState, Endpoint::ClimateState]);
+    /// ```
+    pub fn new_with_endpoints(
+        vehicle_id: impl Into<VehicleId>,
+        endpoints: impl Into<Endpoints>,
+    ) -> Self {
+        Self {
+            vehicle_id: vehicle_id.into(),
+            endpoints: endpoints.into(),
+        }
+    }
+}
+
+impl ApiValues for GetVehicleData {
+    fn format(&self, url: &str) -> String {
+        let url = url.replace("{}", &format!("{}", *self.vehicle_id));
+
+        if self.endpoints.is_empty() {
+            return url;
+        }
+
+        let endpoints = self
+            .endpoints
+            .iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<String>>()
+            .join(";");
+
+        format!("{}?endpoints={}", url, endpoints)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -183,9 +263,9 @@ pub struct ClimateState {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DriveState {
-    /// gak: The following fields (up to native_type) suddenly vanished from the API response so
-    /// I've made them all Option. Maybe API now only returns them when driving?
-    /// TODO: Check if they come back
+    /// From https://developer.tesla.com/docs/fleet-api#vehicle_data
+    /// For vehicles running firmware versions 2023.38+, location_data is required to fetch vehicle
+    /// location. This will result in a location sharing icon to show on the vehicle UI.
     pub gps_as_of: Option<i64>,
     pub heading: Option<i64>,
     pub latitude: Option<f64>,
@@ -460,6 +540,23 @@ pub struct SetScheduledDeparture {
 mod tests {
     use super::*;
     use crate::{PrintResponses, RequestData};
+
+    #[test]
+    fn vehicle_query() {
+        let url = "A/{}/B";
+
+        let get_vehicle_data = GetVehicleData::new(123);
+        assert_eq!(get_vehicle_data.format(url), "A/123/B");
+
+        let get_vehicle_data = GetVehicleData::new_with_endpoints(
+            123,
+            vec![Endpoint::ChargeState, Endpoint::ClimateState],
+        );
+        assert_eq!(
+            get_vehicle_data.format(url),
+            "A/123/B?endpoints=charge_state;climate_state"
+        );
+    }
 
     #[test]
     fn json_charge_state() {

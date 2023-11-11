@@ -5,11 +5,11 @@
 use crate::auth::{AccessToken, RefreshToken};
 use crate::error::TeslatteError;
 use crate::vehicles::{
-    SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture, SetTemperatures,
-    Vehicle, VehicleData,
+    GetVehicleData, SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture,
+    SetTemperatures, Vehicle, VehicleData,
 };
 use chrono::{DateTime, SecondsFormat, TimeZone};
-use derive_more::{Display, FromStr};
+use derive_more::{Deref, Display, From, FromStr};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
@@ -29,7 +29,10 @@ const API_URL: &str = "https://owner-api.teslamotors.com/api/1";
 
 pub trait VehicleApi {
     async fn vehicles(&self) -> Result<Vec<Vehicle>, TeslatteError>;
-    async fn vehicle_data(&self, vehicle_id: &VehicleId) -> Result<VehicleData, TeslatteError>;
+    async fn vehicle_data(
+        &self,
+        get_vehicle_data: &GetVehicleData,
+    ) -> Result<VehicleData, TeslatteError>;
     async fn wake_up(&self, vehicle_id: &VehicleId) -> Result<PostResponse, TeslatteError>;
 
     // Alerts
@@ -97,15 +100,21 @@ pub trait VehicleApi {
 
 trait EnergySitesApi {}
 
-trait Values {
+trait ApiValues {
     fn format(&self, url: &str) -> String;
 }
 
 /// Vehicle ID used by the owner-api endpoint.
 ///
 /// This data comes from [`OwnerApi::vehicles()`] `id` field.
-#[derive(Debug, Serialize, Deserialize, Clone, Display, FromStr)]
+#[derive(Debug, Serialize, Deserialize, Clone, Display, FromStr, From, Deref)]
 pub struct VehicleId(u64);
+
+impl VehicleId {
+    pub fn new(id: u64) -> Self {
+        Self(id)
+    }
+}
 
 /// Vehicle ID used by other endpoints.
 ///
@@ -333,6 +342,7 @@ pub(crate) use pub_get;
 /// GET /api/1/[url] with an argument.
 ///
 /// Pass in the URL as a format string with one arg, which has to impl Display.
+#[allow(unused_macros)]
 macro_rules! get_arg {
     ($name:ident, $return_type:ty, $url:expr, $arg_type:ty) => {
         async fn $name(
@@ -345,6 +355,7 @@ macro_rules! get_arg {
         }
     };
 }
+#[allow(unused_imports)]
 pub(crate) use get_arg;
 
 /// Public variant of get_arg.
@@ -362,8 +373,7 @@ macro_rules! pub_get_arg {
 }
 pub(crate) use pub_get_arg;
 
-/// GET /api/1/[url] with a struct.
-#[allow(unused)] // Leaving this here for now. I'm sure it'll be used during this refactor.
+/// GET /api/1/[url] with a struct to format the URL.
 macro_rules! get_args {
     ($name:ident, $return_type:ty, $url:expr, $args:ty) => {
         async fn $name(
@@ -376,7 +386,6 @@ macro_rules! get_args {
         }
     };
 }
-#[allow(unused)] // Leaving this here for now. I'm sure it'll be used during this refactor.
 pub(crate) use get_args;
 
 /// Public variant of get_args.

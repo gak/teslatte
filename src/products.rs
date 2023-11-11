@@ -88,7 +88,7 @@ pub struct Components {
 mod tests {
     use super::*;
     use crate::energy_sites::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
-    use crate::Values;
+    use crate::ApiValues;
     use chrono::DateTime;
 
     #[test]

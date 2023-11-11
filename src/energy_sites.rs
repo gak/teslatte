@@ -1,5 +1,5 @@
 use crate::products::EnergySiteId;
-use crate::{join_query_pairs, pub_get_arg, pub_get_args, rfc3339, OwnerApi, Values};
+use crate::{join_query_pairs, pub_get_arg, pub_get_args, rfc3339, ApiValues, OwnerApi};
 use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
 use strum::{Display, EnumString, IntoStaticStr};
@@ -194,7 +194,7 @@ pub struct CalendarHistoryValues {
     pub end_date: Option<DateTime<FixedOffset>>,
 }
 
-impl Values for CalendarHistoryValues {
+impl ApiValues for CalendarHistoryValues {
     fn format(&self, url: &str) -> String {
         let url = url.replace("{}", &format!("{}", self.site_id.0));
         let mut pairs: Vec<(&str, String)> = vec![

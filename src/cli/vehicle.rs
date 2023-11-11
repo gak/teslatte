@@ -1,5 +1,6 @@
 use crate::vehicles::{
-    SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture, SetTemperatures,
+    Endpoints, GetVehicleData, SetChargeLimit, SetChargingAmps, SetScheduledCharging,
+    SetScheduledDeparture, SetTemperatures,
 };
 use crate::{OwnerApi, VehicleApi, VehicleId};
 use clap::{Args, Subcommand};
@@ -7,7 +8,7 @@ use clap::{Args, Subcommand};
 #[derive(Debug, Subcommand)]
 pub enum VehicleCommand {
     /// Get vehicle data.
-    VehicleData,
+    VehicleData(Endpoints),
 
     /// Open the charge port door or unlocks the cable.
     ChargePortDoorOpen,
@@ -75,8 +76,9 @@ pub struct VehicleArgs {
 impl VehicleArgs {
     pub async fn run(self, api: &OwnerApi) -> miette::Result<()> {
         match self.command {
-            VehicleCommand::VehicleData => {
-                api.vehicle_data(&self.id).await?;
+            VehicleCommand::VehicleData(endpoints) => {
+                let get_vehicle_data = GetVehicleData::new_with_endpoints(self.id, endpoints);
+                api.vehicle_data(&get_vehicle_data).await?;
             }
             VehicleCommand::SetChargeLimit(limit) => {
                 api.set_charge_limit(&self.id, &limit).await?;
