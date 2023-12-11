@@ -28,7 +28,7 @@ reqwest = { version = "0.11.22", features = ["rustls-tls", "cookies", "json"] }
 url = "2.4.1"
 serde = { version = "1.0.189", features = ["derive"] }
 serde_json = "1.0.107"
-rustls = "0.21.7"
+rustls = "0.22.1"
 rand = "0.8.5"
 chrono = { version = "0.4.31", features = ["serde"] }
 strum = { version = "0.25.0", features = ["derive"] }
