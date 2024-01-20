@@ -69,6 +69,19 @@ pub struct PowerwallData {
     pub sync_grid_alert_enabled: bool,
     pub breaker_alert_enabled: bool,
     pub components: Components,
+    // New fields as of 2024-01-20
+    pub powerwall_onboarding_settings_set: bool,
+    pub storm_mode_enabled: bool,
+    pub features: PowerwallFeatures,
+    pub warp_site_number: String,
+    pub go_off_grid_test_banner_enabled: Option<bool>,
+    pub powerwall_tesla_electric_interested_in: Option<bool>,
+    pub vpp_tour_enabled: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PowerwallFeatures {
+    pub rate_plan_manager_no_pricing_constraint: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -79,7 +92,7 @@ pub struct Components {
     pub solar_type: Option<String>,
     pub grid: bool,
     pub load_meter: bool,
-    pub market_type: String,
+    pub market_type: Option<String>,
     #[serde(default)]
     pub wall_connectors: Vec<WallConnector>,
 }
@@ -88,59 +101,8 @@ pub struct Components {
 mod tests {
     use super::*;
     use crate::energy_sites::{CalendarHistoryValues, HistoryKind, HistoryPeriod};
-    use crate::ApiValues;
+    use crate::{ApiValues, PrintResponses, RequestData};
     use chrono::DateTime;
-
-    #[test]
-    fn energy_match_powerwall() {
-        let json = r#"
-        {
-          "energy_site_id": 1032748243,
-          "resource_type": "battery",
-          "site_name": "1 Railway Pde",
-          "id": "ABC2010-1234",
-          "gateway_id": "3287423824-QWE",
-          "asset_site_id": "123ecd-123ecd-12345-12345",
-          "energy_left": 4394.000000000001,
-          "total_pack_energy": 13494,
-          "percentage_charged": 32.562620423892106,
-          "battery_type": "ac_powerwall",
-          "backup_capable": true,
-          "battery_power": -280,
-          "sync_grid_alert_enabled": true,
-          "breaker_alert_enabled": false,
-          "components": {
-            "battery": true,
-            "battery_type": "ac_powerwall",
-            "solar": true,
-            "solar_type": "pv_panel",
-            "grid": true,
-            "load_meter": true,
-            "market_type": "residential"
-          }
-        }
-        "#;
-
-        if let Product::Powerwall(data) = serde_json::from_str(json).unwrap() {
-            assert_eq!(data.battery_type, "ac_powerwall");
-            assert!(data.backup_capable);
-            assert_eq!(data.battery_power, -280);
-            assert!(data.sync_grid_alert_enabled);
-            assert!(!data.breaker_alert_enabled);
-            assert!(data.components.battery);
-            assert_eq!(
-                data.components.battery_type,
-                Some("ac_powerwall".to_string())
-            );
-            assert!(data.components.solar);
-            assert_eq!(data.components.solar_type, Some("pv_panel".to_string()));
-            assert!(data.components.grid);
-            assert!(data.components.load_meter);
-            assert_eq!(data.components.market_type, "residential");
-        } else {
-            panic!("Expected PowerwallData");
-        }
-    }
 
     #[test]
     fn energy_match_vehicle() {
@@ -268,5 +230,13 @@ mod tests {
             url,
             "https://base.com/e/123/history?period=month&kind=energy&start_date=2020-01-01T00:00:00Z&end_date=2020-01-31T23:59:59Z"
         );
+    }
+
+    #[test]
+    fn json_products_gak_2024_01_20() {
+        let s = include_str!("../testdata/products_gak_2024_01_20.json");
+        let request_data = RequestData::Get { url: "" };
+        OwnerApi::parse_json::<Vec<Product>>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
     }
 }

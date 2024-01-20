@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.12] - 2023-01-20
+
+### Changed
+
+- PowerwallData new fields:
+  - powerwall_onboarding_settings_set
+  - storm_mode_enabled
+  - features
+  - warp_site_number
+  - go_off_grid_test_banner_enabled
+  - powerwall_tesla_electric_interested_in
+  - vpp_tour_enabled
+- Components market_type is now Option<String> 
+- LiveWallConnector wall_connector_power is now f32
+
 ## [0.1.11] - 2023-11-11
 
 ### Changed

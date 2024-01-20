@@ -69,7 +69,7 @@ pub struct LiveWallConnector {
     /// 2: not plugged in
     /// 4: plugged in (not charging)
     pub wall_connector_state: i64,
-    pub wall_connector_power: i64,
+    pub wall_connector_power: f32,
     pub wall_connector_fault_state: i64,
 }
 
@@ -311,7 +311,7 @@ mod tests {
                 vin: Some("1234".to_string()),
                 din: "5432".to_string(),
                 wall_connector_state: 4,
-                wall_connector_power: 0,
+                wall_connector_power: 0.,
                 wall_connector_fault_state: 2,
             }
         );
@@ -336,7 +336,7 @@ mod tests {
                 vin: None,
                 din: "1234".to_string(),
                 wall_connector_state: 2,
-                wall_connector_power: 0,
+                wall_connector_power: 0.,
                 wall_connector_fault_state: 2,
             }
         );

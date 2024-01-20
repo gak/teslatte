@@ -1,0 +1,118 @@
+{
+  "count": 2,
+  "response": [
+    {
+      "access_type": "OWNER",
+      "api_version": 71,
+      "backseat_token": null,
+      "backseat_token_updated_at": null,
+      "ble_autopair_enrolled": false,
+      "cached_data": "",
+      "calendar_enabled": true,
+      "color": null,
+      "command_signing": "required",
+      "display_name": "Kool Beans",
+      "granular_access": {
+        "hide_private": false
+      },
+      "id": 1,
+      "id_s": "1",
+      "in_service": false,
+      "option_codes": null,
+      "release_notes_supported": true,
+      "state": "online",
+      "tokens": [
+      ],
+      "user_id": 2,
+      "vehicle_config": {
+        "aux_park_lamps": "Eu",
+        "badge_version": 0,
+        "can_accept_navigation_requests": true,
+        "can_actuate_trunks": true,
+        "car_special_type": "base",
+        "car_type": "model3",
+        "charge_port_type": "CCS",
+        "cop_user_set_temp_supported": false,
+        "dashcam_clip_save_supported": true,
+        "default_charge_to_max": false,
+        "driver_assist": "TeslaAP3",
+        "ece_restrictions": false,
+        "efficiency_package": "M32021",
+        "eu_vehicle": true,
+        "exterior_color": "MidnightSilver",
+        "exterior_trim": "Black",
+        "exterior_trim_override": "",
+        "has_air_suspension": false,
+        "has_ludicrous_mode": false,
+        "has_seat_cooling": false,
+        "headlamp_type": "Global",
+        "interior_trim_type": "Black2",
+        "key_version": 2,
+        "motorized_charge_port": true,
+        "paint_color_override": "24,24,27,0.9,0.3",
+        "performance_package": "Base",
+        "plg": true,
+        "pws": false,
+        "rear_drive_unit": "PM216MOSFET",
+        "rear_seat_heaters": 1,
+        "rear_seat_type": 0,
+        "rhd": true,
+        "roof_color": "RoofColorGlass",
+        "seat_type": null,
+        "spoiler_type": "None",
+        "sun_roof_installed": null,
+        "supports_qr_pairing": false,
+        "third_row_seats": "None",
+        "timestamp": 1705717676876,
+        "trim_badging": "74d",
+        "use_range_badging": true,
+        "utc_offset": 36000,
+        "webcam_selfie_supported": true,
+        "webcam_supported": true,
+        "wheel_type": "StilettoRefresh19"
+      },
+      "vehicle_id": 1,
+      "vin": "LR"
+    },
+    {
+      "asset_site_id": "",
+      "backup_capable": true,
+      "battery_power": 3520,
+      "battery_type": "ac_powerwall",
+      "breaker_alert_enabled": true,
+      "components": {
+        "battery": true,
+        "battery_type": "ac_powerwall",
+        "grid": true,
+        "load_meter": true,
+        "solar": true,
+        "solar_type": "pv_panel",
+        "wall_connectors": [
+          {
+            "device_id": "",
+            "din": "",
+            "is_active": true
+          }
+        ]
+      },
+      "energy_left": 13136.26315789474,
+      "energy_site_id": 247079748146,
+      "features": {
+        "rate_plan_manager_no_pricing_constraint": true
+      },
+      "gateway_id": "a",
+      "go_off_grid_test_banner_enabled": null,
+      "id": "1234",
+      "percentage_charged": 31.52375310862408,
+      "powerwall_onboarding_settings_set": true,
+      "powerwall_tesla_electric_interested_in": null,
+      "resource_type": "battery",
+      "site_name": "",
+      "storm_mode_enabled": true,
+      "sync_grid_alert_enabled": true,
+      "total_pack_energy": 41671,
+      "vpp_tour_enabled": null,
+      "warp_site_number": "STE00"
+    }
+  ]
+}
