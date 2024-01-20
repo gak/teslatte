@@ -30,3 +30,7 @@ auth:
 
 audit:
     cargo audit
+
+update:
+    cargo update && cargo upgrade
+    cd tesla_api_coverage && cargo update && cargo upgrade
