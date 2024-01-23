@@ -4,15 +4,14 @@ use derive_more::{Deref, DerefMut, From};
 // Sometimes the API will return a null for a field where I've put in a non Option type, which
 // will cause the deserializer to fail. Please log an issue to fix these if you come across it.
 use crate::{
-    get, get_args, post_arg, post_arg_empty, ApiValues, Empty, ExternalVehicleId, OwnerApi,
-    VehicleApi, VehicleId,
+    get_args, post_arg, post_arg_empty, ApiValues, Empty, ExternalVehicleId, OwnerApi, VehicleApi,
+    VehicleId,
 };
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 
 #[rustfmt::skip]
 impl VehicleApi for OwnerApi {
-    get!(vehicles, Vec<Vehicle>, "/vehicles");
     get_args!(vehicle_data, VehicleData, "/vehicles/{}/vehicle_data", GetVehicleData);
     post_arg_empty!(wake_up, "/vehicles/{}/command/wake_up", VehicleId);
 

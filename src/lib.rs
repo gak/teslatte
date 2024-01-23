@@ -6,7 +6,7 @@ use crate::auth::{AccessToken, RefreshToken};
 use crate::error::TeslatteError;
 use crate::vehicles::{
     GetVehicleData, SetChargeLimit, SetChargingAmps, SetScheduledCharging, SetScheduledDeparture,
-    SetTemperatures, Vehicle, VehicleData,
+    SetTemperatures, VehicleData,
 };
 use chrono::{DateTime, SecondsFormat, TimeZone};
 use derive_more::{Deref, Display, From, FromStr};
@@ -28,7 +28,6 @@ pub mod cli;
 const API_URL: &str = "https://owner-api.teslamotors.com/api/1";
 
 pub trait VehicleApi {
-    async fn vehicles(&self) -> Result<Vec<Vehicle>, TeslatteError>;
     async fn vehicle_data(
         &self,
         get_vehicle_data: &GetVehicleData,
@@ -314,6 +313,7 @@ struct ResponseError {
 struct Empty {}
 
 /// GET /api/1/[url]
+#[allow(unused_macros)]
 macro_rules! get {
     ($name:ident, $return_type:ty, $url:expr) => {
         async fn $name(&self) -> Result<$return_type, crate::error::TeslatteError> {
@@ -324,6 +324,7 @@ macro_rules! get {
         }
     };
 }
+#[allow(unused_imports)]
 pub(crate) use get;
 
 /// Same as get, but public.

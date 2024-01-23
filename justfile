@@ -7,9 +7,8 @@ no_token_test:
 
 # Require an access token from "cli.json". Use `just auth` to generate.
 token_tests:
-    cargo run -- api vehicles
-    cargo run --no-default-features --features cli -- api vehicles
     cargo run -- api products
+    cargo run --no-default-features --features cli -- api products
 
 publish version:
     git diff-index --quiet HEAD

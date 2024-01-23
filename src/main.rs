@@ -4,7 +4,7 @@ use teslatte::auth::{AccessToken, RefreshToken};
 use teslatte::cli::energy::EnergySiteArgs;
 use teslatte::cli::powerwall::PowerwallArgs;
 use teslatte::cli::vehicle::VehicleArgs;
-use teslatte::{OwnerApi, PrintResponses, VehicleApi};
+use teslatte::{OwnerApi, PrintResponses};
 
 /// Teslatte
 ///
@@ -106,7 +106,7 @@ async fn main() -> miette::Result<()> {
             api.print_responses = PrintResponses::Pretty;
             match api_args.command {
                 ApiCommand::Vehicles => {
-                    api.vehicles().await?;
+                    panic!("Tesla API has changed. This command is no longer works with the Owners API.");
                 }
                 ApiCommand::Vehicle(v) => {
                     v.run(&api).await?;

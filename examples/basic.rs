@@ -1,8 +1,7 @@
 use std::env;
 use teslatte::auth::AccessToken;
 use teslatte::products::Product;
-use teslatte::vehicles::GetVehicleData;
-use teslatte::{OwnerApi, VehicleApi};
+use teslatte::OwnerApi;
 
 #[tokio::main]
 async fn main() {
@@ -17,19 +16,8 @@ async fn main() {
         }
     };
 
-    let vehicles = api.vehicles().await.unwrap();
-    dbg!(&*vehicles);
-
-    if !vehicles.is_empty() {
-        let get_vehicle_data = GetVehicleData::new(vehicles[0].id.clone());
-        let vehicle_data = api.vehicle_data(&get_vehicle_data).await.unwrap();
-        dbg!(&vehicle_data);
-    } else {
-        println!("No vehicles found!");
-    }
-
     let products = api.products().await.unwrap();
-    dbg!(&*products);
+    dbg!(&products);
 
     if !products.is_empty() {
         for product in &*products {
