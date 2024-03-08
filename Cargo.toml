@@ -20,7 +20,7 @@ path = "src/main.rs"
 required-features = ["cli"]
 
 [dependencies]
-miette = { version = "5.10.0", features = ["fancy"] }
+miette = { version = "7.2.0", features = ["fancy"] }
 thiserror = "1.0.56"
 tokio = { version = "1.35.1", features = ["full"] }
 tracing = "0.1.40"
