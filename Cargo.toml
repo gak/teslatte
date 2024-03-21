@@ -24,7 +24,7 @@ miette = { version = "5.10.0", features = ["fancy"] }
 thiserror = "1.0.56"
 tokio = { version = "1.35.1", features = ["full"] }
 tracing = "0.1.40"
-reqwest = { version = "0.11.23", features = ["rustls-tls", "cookies", "json"] }
+reqwest = { version = "0.12.0", features = ["rustls-tls", "cookies", "json"] }
 url = "2.5.0"
 serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
