@@ -4,7 +4,8 @@ use crate::powerwall::PowerwallId;
 use crate::vehicles::VehicleData;
 use crate::{pub_get, OwnerApi};
 use derive_more::Display;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::Value;
 use std::str::FromStr;
 
 #[rustfmt::skip]
@@ -28,12 +29,42 @@ impl FromStr for EnergySiteId {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GatewayId(String);
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone)]
 pub enum Product {
     Vehicle(Box<VehicleData>),
     Solar(Box<SolarData>),
     Powerwall(Box<PowerwallData>),
+}
+
+fn deserialize_product<'de, D>(deserializer: D) -> Result<Product, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let v = Value::deserialize(deserializer)?;
+
+    if v.get("vehicle_id").is_some() {
+        let vehicle_data = VehicleData::deserialize(v).map_err(serde::de::Error::custom)?;
+        Ok(Product::Vehicle(Box::new(vehicle_data)))
+    } else if v.get("solar_type").is_some() {
+        let solar_data = SolarData::deserialize(v).map_err(serde::de::Error::custom)?;
+        Ok(Product::Solar(Box::new(solar_data)))
+    } else if v.get("battery_type").is_some() {
+        let powerwall_data = PowerwallData::deserialize(v).map_err(serde::de::Error::custom)?;
+        Ok(Product::Powerwall(Box::new(powerwall_data)))
+    } else {
+        Err(serde::de::Error::custom(
+            "No valid key found to determine the product type",
+        ))
+    }
+}
+
+impl<'de> Deserialize<'de> for Product {
+    fn deserialize<D>(deserializer: D) -> Result<Product, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserialize_product(deserializer)
+    }
 }
 
 /// This is assumed from https://tesla-api.timdorr.com/api-basics/products
@@ -61,8 +92,6 @@ pub struct PowerwallData {
     pub id: PowerwallId,
     pub gateway_id: GatewayId,
     pub asset_site_id: String,
-    pub energy_left: f64,
-    pub total_pack_energy: i64,
     pub percentage_charged: f64,
     pub backup_capable: bool,
     pub battery_power: i64,
@@ -235,6 +264,14 @@ mod tests {
     #[test]
     fn json_products_gak_2024_01_20() {
         let s = include_str!("../testdata/products_gak_2024_01_20.json");
+        let request_data = RequestData::Get { url: "" };
+        OwnerApi::parse_json::<Vec<Product>>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
+    }
+
+    #[test]
+    fn json_products_gak_2024_04_12() {
+        let s = include_str!("../testdata/products_gak_2024_04_12.json");
         let request_data = RequestData::Get { url: "" };
         OwnerApi::parse_json::<Vec<Product>>(&request_data, s.to_string(), PrintResponses::Pretty)
             .unwrap();

@@ -97,8 +97,6 @@ pub trait VehicleApi {
     ) -> Result<PostResponse, TeslatteError>;
 }
 
-trait EnergySitesApi {}
-
 trait ApiValues {
     fn format(&self, url: &str) -> String;
 }

@@ -1,0 +1,70 @@
+{
+  "count": 2,
+  "response": [
+    {
+      "access_type": "OWNER",
+      "api_version": 73,
+      "backseat_token": null,
+      "backseat_token_updated_at": null,
+      "ble_autopair_enrolled": false,
+      "cached_data": "",
+      "calendar_enabled": true,
+      "color": null,
+      "command_signing": "required",
+      "display_name": "Kool Beans",
+      "granular_access": {
+        "hide_private": false
+      },
+      "id": 123,
+      "id_s": "123",
+      "in_service": false,
+      "option_codes": null,
+      "release_notes_supported": true,
+      "state": "online",
+      "tokens": [],
+      "user_id": 123,
+      "vehicle_id": 123,
+      "vin": "LRW"
+    },
+    {
+      "asset_site_id": "qwfp",
+      "backup_capable": true,
+      "battery_power": -1590,
+      "battery_type": "ac_powerwall",
+      "breaker_alert_enabled": true,
+      "components": {
+        "battery": true,
+        "battery_type": "ac_powerwall",
+        "grid": true,
+        "load_meter": true,
+        "market_type": "residential",
+        "solar": true,
+        "solar_type": "pv_panel",
+        "wall_connectors": [
+          {
+            "device_id": "qwfp",
+            "din": "qwfp",
+            "is_active": true,
+            "part_number": "1529455-02-D"
+          }
+        ]
+      },
+      "energy_site_id": 1234,
+      "features": {
+        "rate_plan_manager_no_pricing_constraint": true
+      },
+      "gateway_id": "qwfp",
+      "go_off_grid_test_banner_enabled": null,
+      "id": "qwfp",
+      "percentage_charged": 48.872760297620715,
+      "powerwall_onboarding_settings_set": true,
+      "powerwall_tesla_electric_interested_in": null,
+      "resource_type": "battery",
+      "site_name": "",
+      "storm_mode_enabled": true,
+      "sync_grid_alert_enabled": true,
+      "vpp_tour_enabled": null,
+      "warp_site_number": ""
+    }
+  ]
+}

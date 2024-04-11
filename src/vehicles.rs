@@ -458,9 +458,6 @@ pub struct GranularAccess {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Vehicles(Vec<Vehicle>);
-
-#[derive(Debug, Deserialize)]
 pub struct Vehicle {
     pub id: VehicleId,
     pub vehicle_id: ExternalVehicleId,

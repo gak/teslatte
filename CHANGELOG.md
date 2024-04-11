@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `energy_left` and `total_pack_energy` are gone from the API. (#22)
+- Don't rely on serde untagged to determine the product type, as any missing
+  fields will give an unspecified error. Instead directly check known fields
+  that will probably not be removed. https://github.com/serde-rs/serde/pull/2376
+
 ## [0.1.13] - 2023-01-24
 
 ### Changed
@@ -23,13 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - go_off_grid_test_banner_enabled
   - powerwall_tesla_electric_interested_in
   - vpp_tour_enabled
-- Components market_type is now Option<String> 
+- Components market_type is now Option<String>
 - LiveWallConnector wall_connector_power is now f32
 
 ## [0.1.11] - 2023-11-11
 
 ### Changed
- 
+
 - `vehicle_data` now accepts `GetVehicleData` instead of `VehicleId`. (See [6facc27](https://github.com/gak/teslatte/commit/6facc27d8b408d35b98b4c6c0ad3e5df82328d2c))
 
 ## [0.1.10] - 2023-11-11
@@ -37,17 +46,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - API changes for "api_version 67"
+
   - VehicleData new fields:
+
     - cached_data
     - command_signing
     - release_notes_supported
 
   - ClimateState new fields:
+
     - auto_steering_wheel_heat
     - cop_activation_temperature,
     - steering_wheel_heat_level
 
   - DriveState now Optional:
+
     - gps_as_of
     - heading
     - latitude
@@ -58,16 +71,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - native_type
 
   - DriveState new fields:
+
     - active_route_traffic_minutes_delay
 
   - GuiSettings new field:
+
     - gui_tirepressure_units
 
   - VehicleConfig new fields:
+
     - cop_user_set_temp_supported
     - webcam_selfie_supported
 
   - VehicleState new fields:
+
     - media_info: MediaInfo
     - tpms_hard_warning_fl
     - tpms_hard_warning_fr

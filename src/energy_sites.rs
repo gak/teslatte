@@ -18,7 +18,6 @@ pub struct SiteStatus {
     pub battery_power: i64,
     pub battery_type: String,
     pub breaker_alert_enabled: bool,
-    pub energy_left: f64,
     pub gateway_id: String,
     pub percentage_charged: f64,
     pub powerwall_onboarding_settings_set: bool,
@@ -29,14 +28,12 @@ pub struct SiteStatus {
     pub site_name: String,
     pub storm_mode_enabled: bool,
     pub sync_grid_alert_enabled: bool,
-    pub total_pack_energy: i64,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct LiveStatus {
     pub backup_capable: bool,
     pub battery_power: i64,
-    pub energy_left: f64,
     pub generator_power: i64,
     pub grid_power: i64,
     pub grid_services_active: bool,
