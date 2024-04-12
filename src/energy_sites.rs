@@ -45,7 +45,6 @@ pub struct LiveStatus {
     pub solar_power: i64,
     pub storm_mode_active: bool,
     pub timestamp: String,
-    pub total_pack_energy: i64,
     pub wall_connectors: Vec<LiveWallConnector>,
 }
 
