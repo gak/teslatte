@@ -213,7 +213,7 @@ mod tests {
             assert_eq!(v.option_codes.unwrap(), "ASDF,SDFG,DFGH");
             assert_eq!(v.color, None);
             assert_eq!(v.access_type, "OWNER");
-            assert_eq!(v.tokens, vec!["asdf1234"]);
+            assert_eq!(v.tokens, Some(vec!["asdf1234".to_string()]));
             assert_eq!(v.state, "online");
             assert!(!v.in_service);
             assert!(v.calendar_enabled);
@@ -272,6 +272,14 @@ mod tests {
     #[test]
     fn json_products_gak_2024_04_12() {
         let s = include_str!("../testdata/products_gak_2024_04_12.json");
+        let request_data = RequestData::Get { url: "" };
+        OwnerApi::parse_json::<Vec<Product>>(&request_data, s.to_string(), PrintResponses::Pretty)
+            .unwrap();
+    }
+
+    #[test]
+    fn json_products_ulr_2024_08_14() {
+        let s = include_str!("../testdata/products_ulr_2024_08_14.json");
         let request_data = RequestData::Get { url: "" };
         OwnerApi::parse_json::<Vec<Product>>(&request_data, s.to_string(), PrintResponses::Pretty)
             .unwrap();

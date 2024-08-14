@@ -40,6 +40,9 @@ pub enum VehicleCommand {
     /// Set scheduled departure.
     SetScheduledDeparture(SetScheduledDeparture),
 
+    /// Wake up
+    WakeUp,
+
     /// Honk!
     HonkHorn,
 
@@ -109,6 +112,9 @@ impl VehicleArgs {
             }
             VehicleCommand::SetScheduledDeparture(departure) => {
                 api.set_scheduled_departure(&self.id, &departure).await?;
+            }
+            VehicleCommand::WakeUp => {
+                api.wake_up(&self.id).await?;
             }
             VehicleCommand::HonkHorn => {
                 api.honk_horn(&self.id).await?;
