@@ -132,7 +132,7 @@ pub struct VehicleData {
     pub color: Option<String>,
     pub access_type: String,
     pub granular_access: Option<GranularAccess>,
-    pub tokens: Vec<String>,
+    pub tokens: Option<Vec<String>>,
     pub state: String,
     pub in_service: bool,
     pub id_s: String,
@@ -155,6 +155,8 @@ pub struct VehicleData {
     pub cached_data: Option<String>,
     pub command_signing: Option<String>,
     pub release_notes_supported: Option<bool>,
+
+    pub mobile_access_disabled: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
