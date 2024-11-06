@@ -21,7 +21,7 @@ required-features = ["cli"]
 
 [dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
-thiserror = "1.0.56"
+thiserror = "2.0.0"
 tokio = { version = "1.35.1", features = ["full"] }
 tracing = "0.1.40"
 reqwest = { version = "0.12.3", features = ["rustls-tls", "cookies", "json"] }
